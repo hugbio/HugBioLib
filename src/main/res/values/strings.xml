@@ -1,0 +1,5 @@
+<resources>
+
+    <string name="app_name">AndroidEvent</string>
+	<string name="toast_disconnect">数据请求失败!</string>
+</resources>

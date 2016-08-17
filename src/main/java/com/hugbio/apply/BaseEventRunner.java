@@ -12,8 +12,8 @@ public abstract  class BaseEventRunner extends HttpRunner {
 	 * 根据需要设置服务器返回的信息
 	 */
 	@Override
-	protected ErrorMsgException setMsgException(String msg, String resultcode) {
-		return super.setMsgException(msg, resultcode);
+	protected ErrorMsgException setMsgException(String msg, int show_type) {
+		return super.setMsgException(msg, show_type);
 	}
 	
 	/**

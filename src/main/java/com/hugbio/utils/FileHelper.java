@@ -71,6 +71,22 @@ public class FileHelper {
 			file.delete();
 		}
 	}
+	public static boolean deleteFileOrDir(File path) {
+		if (path == null || !path.exists()) {
+			return true;
+		}
+		if (path.isFile()) {
+			return path.delete();
+		}
+		File[] files = path.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				deleteFileOrDir(file);
+			}
+		}
+		return path.delete();
+	}
+
 	
 	public static void saveBitmapToFile(String pathDst,Bitmap bmp){
 		saveBitmapToFile(pathDst, bmp, 80);
@@ -152,5 +168,24 @@ public class FileHelper {
 			return fileName.substring(pos + 1);
 		}
 		return def;
+	}
+
+	public static boolean rename(String src,String dst,boolean isCover) {
+		if (!src.equals(dst)) {
+			File newFile = new File(dst);
+			File oldfile = new File(src);
+			if (!oldfile.exists()) {
+				return false;
+			}
+			if (newFile.exists()) {
+				if (isCover && !newFile.isDirectory()) {
+					newFile.delete();
+				} else {
+					return false;
+				}
+			}
+			return oldfile.renameTo(newFile);
+		}
+		return true;
 	}
 }

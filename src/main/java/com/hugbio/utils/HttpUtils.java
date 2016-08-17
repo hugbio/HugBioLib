@@ -1,22 +1,10 @@
 package com.hugbio.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import android.os.Handler;
+import android.text.TextUtils;
+
+import com.hugbio.download.DownloadParams;
+import com.hugbio.download.FileDownloadUtils;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -40,8 +28,23 @@ import org.apache.http.util.CharArrayBuffer;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
-import android.os.Handler;
-import android.text.TextUtils;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HttpUtils {
 
@@ -94,9 +97,9 @@ public class HttpUtils {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else{
-            if(response != null){
-                strResult = "HttpStatusCode:"+response.getStatusLine().getStatusCode();
+        } else {
+            if (response != null) {
+                strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
             }
         }
         return strResult;
@@ -111,9 +114,9 @@ public class HttpUtils {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else{
-            if(response != null){
-                strResult = "HttpStatusCode:"+response.getStatusLine().getStatusCode();
+        } else {
+            if (response != null) {
+                strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
             }
         }
         return strResult;
@@ -175,9 +178,9 @@ public class HttpUtils {
 
             if (isResponseAvailable(response)) {
                 strResult = EntityUtils.toString(response.getEntity());
-            }else{
-                if(response != null){
-                    strResult = "HttpStatusCode:"+response.getStatusLine().getStatusCode();
+            } else {
+                if (response != null) {
+                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
@@ -185,6 +188,7 @@ public class HttpUtils {
         }
         return strResult;
     }
+
     public static String doPostForJson(String strUrl, Object jo) {
         String strResult = null;
         HttpResponse response = null;
@@ -214,9 +218,9 @@ public class HttpUtils {
 
             if (isResponseAvailable(response)) {
                 strResult = EntityUtils.toString(response.getEntity());
-            }else{
-                if(response != null){
-                    strResult = "HttpStatusCode:"+response.getStatusLine().getStatusCode();
+            } else {
+                if (response != null) {
+                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
@@ -226,7 +230,7 @@ public class HttpUtils {
     }
 
     public static String doPost(String strUrl, Map<String, String> mapToNameValue, Map<String, String> mapKeyToFilePath,
-            ProgressRunnable pr, Handler handler, AtomicBoolean cancel) {
+                                ProgressRunnable pr, Handler handler, AtomicBoolean cancel) {
         String strResult = null;
         HttpResponse response = null;
         try {
@@ -274,9 +278,9 @@ public class HttpUtils {
 
             if (isResponseAvailable(response)) {
                 strResult = EntityUtils.toString(response.getEntity());
-            }else{
-                if(response != null){
-                    strResult = "HttpStatusCode:"+response.getStatusLine().getStatusCode();
+            } else {
+                if (response != null) {
+                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
@@ -395,8 +399,8 @@ public class HttpUtils {
         return doUpload(strUrl, strFilePath, null, null);
     }
 
-    @SuppressWarnings("resource")
-    public static boolean doDownload(String strUrl, String strSavePath, ProgressRunnable progress, Handler handler, AtomicBoolean bCancel) {
+    @Deprecated
+    public static boolean doDownload1(String strUrl, String strSavePath, ProgressRunnable progress, Handler handler, AtomicBoolean bCancel) {
         HttpResponse response = doConnection(strUrl);
         if (isResponseAvailable(response)) {
             InputStream is = null;
@@ -450,9 +454,9 @@ public class HttpUtils {
         return false;
     }
 
-    @SuppressWarnings("resource")
-    public static boolean doDownload(String strUrl, String strSavePath, boolean bUseTemp, ProgressRunnable progress, Handler handler,
-            AtomicBoolean bCancel) {
+    @Deprecated
+    public static boolean doDownload1(String strUrl, String strSavePath, boolean bUseTemp, ProgressRunnable progress, Handler handler,
+                                      AtomicBoolean bCancel) {
         HttpResponse response = doConnection(strUrl);
         if (isResponseAvailable(response)) {
             InputStream is = null;
@@ -516,14 +520,148 @@ public class HttpUtils {
         return false;
     }
 
-    private static boolean isResponseAvailable(HttpResponse response) {
+    /***
+     * 下载
+     *
+     * @return 2000  参数错误
+     * 2010  未知的错误
+     * 0 下载成功
+     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；4-下载过程中发送未知错误
+     */
+    public static int doDownload(String strUrl, String strSavePath, DownloadParams params) {
+        if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
+            return 2000;
+        }
+        InputStream is = null;
+        FileOutputStream fos = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            final URL url = new URL(strUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            is = urlConnection.getInputStream();
+            fos = FileHelper.createFileOutputStream(strSavePath);
+            if (fos != null) {
+                final byte buf[] = new byte[1024];
+                if (params.getProgressCallback() == null) {
+                    int lReadLength = 0;
+                    while ((lReadLength = is.read(buf)) != -1) {
+                        fos.write(buf, 0, lReadLength);
+                    }
+                } else {
+                    long lDownloadLength = 0;
+                    int lReadLength = 0;
+                    final long lTotalLength = urlConnection.getContentLength();
+                    while (true) {
+                        if (params.getDownStatus() > 0 && params.getDownStatus() < 3) {
+                            File file = new File(strSavePath);
+                            file.delete();
+                            return 3;
+                        } else if ((lReadLength = is.read(buf)) != -1) {
+                            fos.write(buf, 0, lReadLength);
+                            lDownloadLength += lReadLength;
+                            ProgressRunnable progressCallback = params.getProgressCallback();
+                            if(progressCallback != null){
+                                progressCallback.mPercentage = (int) (lDownloadLength * 100 / lTotalLength);
+                                params.getHandler().post(progressCallback);
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                params.setComplete();
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            FileHelper.deleteFile(strSavePath);
+        } finally {
+            try {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (is != null) {
+                    is.close();
+                }
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (Exception e) {
+            }
+        }
+        return 2010;
+    }
+
+    /***
+     * 支持断点续传的下载
+     *
+     * @return 2000  参数错误
+     * 2001 服务器返回数据为空
+     * 2002  连接错误
+     * 2003 下载成功但文件保存（重命名）失败
+     * 2010  未知的错误
+     * 0 下载成功
+     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；4-下载过程中发送未知错误
+     */
+    public static int doDownloadForResume(String strUrl, String strSavePath, DownloadParams params) {
+        if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
+            return 2000;   //参数错误
+        }
+        HttpURLConnection urlConnection = null;
+        try {
+            String tempFilePath = FileDownloadUtils.getTempFilePath(strSavePath);
+            long range = 0;
+            if (!params.isRestart()) {
+                range = FileDownloadUtils.getRange(tempFilePath);
+            }else{
+                FileDownloadUtils.deleteDownloadFile(strSavePath);
+            }
+            final URL url = new URL(strUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setRequestProperty("RANGE", "bytes=" + range + "-");
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == 204 || responseCode == 205) {
+                return 2001;  // 服务器返回的数据为空
+            } else if (responseCode >= 300) {
+                return 2002;  //连接错误
+            }
+            boolean isAutoResume = FileDownloadUtils.isSupportRange(urlConnection);
+            if (!isAutoResume) { //服务器如果不支持断点续传，则重新下载
+                range = 0;
+            }
+            //断点续传
+            int ret = FileDownloadUtils.downLoad(urlConnection, tempFilePath, false, range, params);
+            if (ret == 0 && !FileHelper.rename(tempFilePath, strSavePath, true)) {
+                return 2003;
+            }
+            if(ret == 0){
+                params.setComplete();
+            }
+            return ret;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            } catch (Exception e) {
+            }
+        }
+        return 2010;
+    }
+
+
+    public static boolean isResponseAvailable(HttpResponse response) {
         if (response != null && response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
             return true;
         }
         return false;
     }
 
-    private static HttpResponse doConnection(String strUrl) {
+    public static HttpResponse doConnection(String strUrl) {
         HttpResponse response = null;
         try {
             final URI uri = new URI(strUrl);
@@ -613,7 +751,7 @@ public class HttpUtils {
     }
 
     public static abstract class ProgressRunnable implements Runnable {
-        private int mPercentage = -1;
+        public int mPercentage = -1;
 
         public int getPercentage() {
             return mPercentage;

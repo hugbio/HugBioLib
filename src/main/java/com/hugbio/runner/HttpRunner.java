@@ -3,6 +3,12 @@ package com.hugbio.runner;
 import android.os.Handler;
 import android.text.TextUtils;
 
+import com.hugbio.core.EventManager.OnEventRunner;
+import com.hugbio.download.DownloadParams;
+import com.hugbio.utils.ErrorMsgException;
+import com.hugbio.utils.HttpUtils;
+import com.hugbio.utils.StringIdException;
+
 import org.json.JSONObject;
 
 import java.net.UnknownHostException;
@@ -11,12 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.hugbio.core.EventManager.OnEventRunner;
-import com.hugbio.utils.ErrorMsgException;
-import com.hugbio.utils.HttpUtils;
-import com.hugbio.utils.StringIdException;
-import com.hugbio.utils.ToastManager;
 
 public abstract class HttpRunner implements OnEventRunner {
 
@@ -87,7 +87,7 @@ public abstract class HttpRunner implements OnEventRunner {
             int result = jsonObject.getInt("result");
             if (resultForOK.contains(result)) {
                 return true;
-            } else if ("3003".equals(result)) {
+            } else if (result == 3003) {
                 HttpUtils.sessid = "";
             }
         } catch (Exception e) {
@@ -162,10 +162,27 @@ public abstract class HttpRunner implements OnEventRunner {
     }
 
     protected boolean doDownload(String url, String strSavePath) {
-        if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(url)) {
-            return false;
+        DownloadParams params = new DownloadParams(url,strSavePath);
+        params.setResume(false);
+        int isSuccees = HttpUtils.doDownload(url, strSavePath,params);
+        return isSuccees == 0;
+    }
+
+    protected int doDownloadForResume(String url, String strSavePath, boolean isRestart) {
+        DownloadParams params = new DownloadParams(url,strSavePath);
+        params.setResume(true);
+        params.setRestart(isRestart);
+        int isSuccees = HttpUtils.doDownloadForResume(url, strSavePath,params);
+        return isSuccees;
+    }
+
+    protected int doDownload(DownloadParams params){
+        int isSuccees;
+        if(params.isResume()){
+            isSuccees = HttpUtils.doDownloadForResume(params.getUrl(), params.getSavePath(),params);
+        }else {
+            isSuccees = HttpUtils.doDownload(params.getUrl(), params.getSavePath(),params);
         }
-        boolean isSuccees = HttpUtils.doDownload(url, strSavePath, null, null, null);
         return isSuccees;
     }
 
@@ -175,15 +192,15 @@ public abstract class HttpRunner implements OnEventRunner {
         if (TextUtils.isEmpty(ret)) {
             throw new StringIdException(com.hugbio.androidevent.R.string.toast_disconnect);
         } else {
-            if(ret.startsWith("HttpStatusCode")){
-                throw setMsgException(ret,"1122");
+            if (ret.startsWith("HttpStatusCode")) {
+                throw setMsgException(ret, 1122);
             }
             int indexOf = ret.indexOf("{");
             if (indexOf > 0) {
                 ret = ret.substring(indexOf);
             }
             JSONObject jo = new JSONObject(ret.trim());
-            String resultcode = "";// 消息
+            String msg = "";// 消息
             int show_type = 0;// 显示类型1 alert 2 toaster 0不显示
 
             // 判断json串中的ok字段是否为true，是的话跳过，正常解析有用的部分，如果为false，取出服务器返回的error，扔到异常类处理
@@ -193,9 +210,11 @@ public abstract class HttpRunner implements OnEventRunner {
                  * AndroidEventManager中的processEvent方法会catch到这个异常，然后处理
                  */
                 if (jo.has("result")) {
-                    resultcode = jo.getString("result");
+                    msg = jo.getString("result");
+                } else {
+                    msg = jo.toString();
                 }
-                throw setMsgException(resultcode + ":" + jo.toString(), resultcode);
+                throw setMsgException(msg + ":" + jo.toString(), show_type);
 
             }
             return jo;
@@ -203,9 +222,9 @@ public abstract class HttpRunner implements OnEventRunner {
     }
 
     // 设置返回的额外信息，根据需要，自己重写
-    protected ErrorMsgException setMsgException(String msg, String resultcode) {
+    protected ErrorMsgException setMsgException(String msg, int show_type) {
 
-        return new ErrorMsgException(msg, resultcode);
+        return new ErrorMsgException(msg, show_type);
     }
 
     // 给url增加的公共参数，根据需要，自己重写

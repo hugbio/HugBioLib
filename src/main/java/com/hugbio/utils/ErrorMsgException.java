@@ -9,11 +9,11 @@ package com.hugbio.utils;
 @SuppressWarnings("serial")
 public class ErrorMsgException extends Exception {
 	private String ErrorMsg;
-	private String resultcode;
+	private int show_type;
 
-	public ErrorMsgException(String ErrorMsg, String resultcode) {
+	public ErrorMsgException(String ErrorMsg, int show_type) {
 		this.ErrorMsg = ErrorMsg;
-		this.resultcode = resultcode;
+		this.show_type = show_type;
 	}
 
 	public String getErrorMsg() {
@@ -21,8 +21,8 @@ public class ErrorMsgException extends Exception {
 
 	}
 
-	public String getResultCode() {
-		return resultcode;
+	public int getShowType() {
+		return show_type;
 
 	}
 }

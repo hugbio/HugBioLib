@@ -126,10 +126,13 @@ public class FileDownloadUtils {
             byte[] tmp = new byte[4096];
             int len;
             while ((len = bis.read(tmp)) != -1) {
-                if (params.getDownStatus() > 0 && params.getDownStatus() < 3) {  //用户中断下载
+                if (params.getDownStatus() > DownloadParams.DOWNSTATUS_DEFAULT && params.getDownStatus() < DownloadParams.DOWNSTATUS_COMPLETE) {  //用户中断下载
                     bos.flush();
-                    if(params.getDownStatus() == 2){  //取消下载
+                    if(params.getDownStatus() == DownloadParams.DOWNSTATUS_CANCELING || params.getDownStatus() == DownloadParams.DOWNSTATUS_CANCEL ){  //取消下载
+                        params.setInterruptStatus(DownloadParams.DOWNSTATUS_CANCEL);
                         targetFile.delete();
+                    }else {
+                        params.setInterruptStatus(DownloadParams.DOWNSTATUS_PAUSE);
                     }
                     return 3;
                 }

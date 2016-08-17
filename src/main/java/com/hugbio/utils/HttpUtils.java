@@ -532,6 +532,7 @@ public class HttpUtils {
         if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
             return 2000;
         }
+        params.setRestore();
         InputStream is = null;
         FileOutputStream fos = null;
         HttpURLConnection urlConnection = null;
@@ -552,9 +553,10 @@ public class HttpUtils {
                     int lReadLength = 0;
                     final long lTotalLength = urlConnection.getContentLength();
                     while (true) {
-                        if (params.getDownStatus() > 0 && params.getDownStatus() < 3) {
+                        if (params.getDownStatus() > DownloadParams.DOWNSTATUS_DEFAULT && params.getDownStatus() < DownloadParams.DOWNSTATUS_COMPLETE) {
                             File file = new File(strSavePath);
                             file.delete();
+                            params.setInterruptStatus(DownloadParams.DOWNSTATUS_CANCEL);
                             return 3;
                         } else if ((lReadLength = is.read(buf)) != -1) {
                             fos.write(buf, 0, lReadLength);
@@ -589,6 +591,7 @@ public class HttpUtils {
             } catch (Exception e) {
             }
         }
+        params.setInterruptStatus(DownloadParams.DOWNSTATUS_FAILURE);
         return 2010;
     }
 
@@ -607,6 +610,7 @@ public class HttpUtils {
         if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
             return 2000;   //参数错误
         }
+        params.setRestore();
         HttpURLConnection urlConnection = null;
         try {
             String tempFilePath = FileDownloadUtils.getTempFilePath(strSavePath);
@@ -638,6 +642,8 @@ public class HttpUtils {
             }
             if(ret == 0){
                 params.setComplete();
+            }else if(ret != 3){
+                params.setInterruptStatus(DownloadParams.DOWNSTATUS_FAILURE);
             }
             return ret;
         } catch (Exception e) {
@@ -650,6 +656,7 @@ public class HttpUtils {
             } catch (Exception e) {
             }
         }
+        params.setInterruptStatus(DownloadParams.DOWNSTATUS_FAILURE);
         return 2010;
     }
 

@@ -11,13 +11,22 @@ import java.lang.ref.WeakReference;
  * 由 HBOK 在 2016/8/17 创建.
  */
 public class DownloadParams {
+
+    public static final int DOWNSTATUS_DEFAULT = 0;  //默认状态
+    public static final int DOWNSTATUS_PAUSEING = 1;  //暂停中
+    public static final int DOWNSTATUS_PAUSE = 2;   //暂停
+    public static final int DOWNSTATUS_CANCELING = 3;   //取消中
+    public static final int DOWNSTATUS_CANCEL = 4;   //取消
+    public static final int DOWNSTATUS_COMPLETE = 5;  //下载完成
+    public static final int DOWNSTATUS_FAILURE = 6;  //下载失败
+
     public String url;
     public String savePath;
     private boolean isRestart = true;  //是否重新下载，只有开启断点续传时有效，默认开启，
                                                                 // 需要先判断是否存在一个相同并且已中断的任务，当存在时关闭重新下载进行续传下载
     private WeakReference<HttpUtils.ProgressRunnable> wrCallback = null;
     private Handler handler;
-    public int downStatus = 0;  //0:默认状态   1:暂停状态    2:取消状态  3:下载完成
+    public int downStatus = DOWNSTATUS_DEFAULT;  // 用于控制下载
     private boolean isResume = true;   //是否开启断点续传，默认开启，当isRestart为false时尝试进行续传下载否则重新下载
 
     public DownloadParams(String url, String savePath) {
@@ -87,17 +96,35 @@ public class DownloadParams {
     }
 
     public void cancel(){
-        downStatus = 2;
+        downStatus = DOWNSTATUS_CANCELING;
     }
 
     public void pause(){
-        downStatus = 1;
-    }
-    public void restore(){
-        downStatus = 0;
+        downStatus = DOWNSTATUS_PAUSEING;
     }
 
+
+    /***
+     * 仅在库中使用。外部不能调用
+     */
+    public void setRestore(){
+        downStatus = DOWNSTATUS_DEFAULT;
+    }
+
+    /***
+     * 仅在库中使用。外部不能调用
+     */
     public void setComplete(){
-        downStatus = 3;
+        downStatus = DOWNSTATUS_COMPLETE;
+    }
+
+    /***
+     * 仅在库中使用。外部不能调用
+     */
+    public void setInterruptStatus(int status){
+        if(status != DOWNSTATUS_CANCEL && status != DOWNSTATUS_PAUSE){
+            return;
+        }
+        downStatus = status;
     }
 }

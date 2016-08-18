@@ -162,26 +162,26 @@ public abstract class HttpRunner implements OnEventRunner {
     }
 
     protected boolean doDownload(String url, String strSavePath) {
-        DownloadParams params = new DownloadParams(url,strSavePath);
+        DownloadParams params = new DownloadParams(url, strSavePath);
         params.setResume(false);
-        int isSuccees = HttpUtils.doDownload(url, strSavePath,params);
+        int isSuccees = HttpUtils.doDownload(url, strSavePath, params);
         return isSuccees == 0;
     }
 
     protected int doDownloadForResume(String url, String strSavePath, boolean isRestart) {
-        DownloadParams params = new DownloadParams(url,strSavePath);
+        DownloadParams params = new DownloadParams(url, strSavePath);
         params.setResume(true);
         params.setRestart(isRestart);
-        int isSuccees = HttpUtils.doDownloadForResume(url, strSavePath,params);
+        int isSuccees = HttpUtils.doDownloadForResume(url, strSavePath, params);
         return isSuccees;
     }
 
-    protected int doDownload(DownloadParams params){
+    protected int doDownload(DownloadParams params) {
         int isSuccees;
-        if(params.isResume()){
-            isSuccees = HttpUtils.doDownloadForResume(params.getUrl(), params.getSavePath(),params);
-        }else {
-            isSuccees = HttpUtils.doDownload(params.getUrl(), params.getSavePath(),params);
+        if (params.isResume()) {
+            isSuccees = HttpUtils.doDownloadForResume(params.getUrl(), params.getSavePath(), params);
+        } else {
+            isSuccees = HttpUtils.doDownload(params.getUrl(), params.getSavePath(), params);
         }
         return isSuccees;
     }
@@ -193,7 +193,7 @@ public abstract class HttpRunner implements OnEventRunner {
             throw new StringIdException(com.hugbio.androidevent.R.string.toast_disconnect);
         } else {
             if (ret.startsWith("HttpStatusCode")) {
-                throw setMsgException(ret, 1122);
+                throw setMsgException(ret, "1122");
             }
             int indexOf = ret.indexOf("{");
             if (indexOf > 0) {
@@ -209,12 +209,12 @@ public abstract class HttpRunner implements OnEventRunner {
                  * 如果ok为false，丢给异常类，终止方法的执行,
                  * AndroidEventManager中的processEvent方法会catch到这个异常，然后处理
                  */
+                String result = "";
                 if (jo.has("result")) {
                     msg = jo.getString("result");
-                } else {
-                    msg = jo.toString();
+                    result = msg;
                 }
-                throw setMsgException(msg + ":" + jo.toString(), show_type);
+                throw setMsgException(msg + ":" + jo.toString(), result);
 
             }
             return jo;
@@ -222,9 +222,9 @@ public abstract class HttpRunner implements OnEventRunner {
     }
 
     // 设置返回的额外信息，根据需要，自己重写
-    protected ErrorMsgException setMsgException(String msg, int show_type) {
+    protected ErrorMsgException setMsgException(String msg, String resultCode) {
 
-        return new ErrorMsgException(msg, show_type);
+        return new ErrorMsgException(msg, resultCode);
     }
 
     // 给url增加的公共参数，根据需要，自己重写

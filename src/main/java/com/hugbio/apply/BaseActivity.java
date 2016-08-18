@@ -312,7 +312,7 @@ public class BaseActivity extends Activity implements OnEventListener {
     }
 
     protected void onHandleErrorMsgException(ErrorMsgException e) {
-        int type = e.getShowType();
+        String resultCode = e.getResultCode();
 //		switch (type) {
 //		case 0:
 //

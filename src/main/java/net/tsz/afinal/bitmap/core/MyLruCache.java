@@ -71,7 +71,13 @@ public class MyLruCache extends LruCache<String, BitmapDrawable> {
 	        // From KitKat onward use getAllocationByteCount() as allocated bytes can potentially be
 	        // larger than bitmap byte count.
 	        if (Utils.hasKitKat()) {
-	            return bitmap.getAllocationByteCount();
+				try {
+					int allocationByteCount = bitmap.getAllocationByteCount();
+					return allocationByteCount;
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+				return 0;
 	        }
 
 	        if (Utils.hasHoneycombMR1()) {

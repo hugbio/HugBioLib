@@ -830,6 +830,16 @@ public class FinalDb {
 	}
 
 	/**
+	 * 获取count
+     */
+	public  <T> int count(Class<T> clazz) {
+		checkTableExist(clazz);
+		TableInfo tableInfo = TableInfo.get(clazz);
+		DbModel dbModelBySQL = findDbModelBySQL("select count(*) from " + tableInfo.getTableName() + " ;");
+		return dbModelBySQL.getInt("count(*)");
+	}
+
+	/**
 	 * 根据sql语句查找数据，这个一般用于数据统计
 	 * 
 	 * @param strSQL

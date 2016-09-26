@@ -751,13 +751,25 @@ public class FinalDb {
 	 * 查找前limit条数据
 	 *
 	 * @param clazz
-	 * @param limit
-	 *            排序的字段
+	 * @param limit  返回记录行的最大数目
 	 */
 	public <T> List<T> findAllByLimit(Class<T> clazz, int limit) {
 		checkTableExist(clazz);
 		return findAllBySql(clazz, SqlBuilder.getSelectSQL(clazz)
 				+ " limit " + limit);
+	}
+
+	/**
+	 * 查找前limit条数据
+	 *
+	 * @param clazz
+	 * @param offset  第一个返回记录行的偏移量
+	 * @param max 返回记录行的最大数目
+	 */
+	public <T> List<T> findAllByLimit(Class<T> clazz, int offset,int max) {
+		checkTableExist(clazz);
+		return findAllBySql(clazz, SqlBuilder.getSelectSQL(clazz)
+				+ " limit " + offset+","+max);
 	}
 
 	/**

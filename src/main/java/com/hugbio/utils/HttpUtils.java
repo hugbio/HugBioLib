@@ -539,6 +539,8 @@ public class HttpUtils {
         try {
             final URL url = new URL(strUrl);
             urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(params.getTimeOut());
+            urlConnection.setReadTimeout(params.getTimeOut());
             is = urlConnection.getInputStream();
             fos = FileHelper.createFileOutputStream(strSavePath);
             if (fos != null) {
@@ -622,7 +624,8 @@ public class HttpUtils {
             }
             final URL url = new URL(strUrl);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(5000);
+            urlConnection.setConnectTimeout(params.getTimeOut());
+            urlConnection.setReadTimeout(params.getTimeOut());
             urlConnection.setRequestMethod("GET");
             urlConnection.setRequestProperty("RANGE", "bytes=" + range + "-");
             int responseCode = urlConnection.getResponseCode();

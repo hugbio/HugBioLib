@@ -28,6 +28,7 @@ public class DownloadParams {
     private Handler handler;
     public int downStatus = DOWNSTATUS_DEFAULT;  // 用于控制下载
     private boolean isResume = true;   //是否开启断点续传，默认开启，当isRestart为false时尝试进行续传下载否则重新下载
+    private int timeOut = 8000;  //默认8秒的超时时间（连接和读取）
 
     public DownloadParams(String url, String savePath) {
         this(url,savePath,true);
@@ -103,6 +104,13 @@ public class DownloadParams {
         downStatus = DOWNSTATUS_PAUSEING;
     }
 
+    public void setTimeOut(int timeOut) {
+        this.timeOut = timeOut;
+    }
+
+    public int getTimeOut() {
+        return timeOut;
+    }
 
     /***
      * 仅在库中使用。外部不能调用

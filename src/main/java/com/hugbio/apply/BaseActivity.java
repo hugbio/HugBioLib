@@ -20,7 +20,7 @@ import com.hugbio.core.AndroidEventManager;
 import com.hugbio.core.Event;
 import com.hugbio.core.EventManager.OnEventListener;
 import com.hugbio.utils.ErrorMsgException;
-import com.hugbio.utils.StringIdException;
+import com.hugbio.utils.NetException;
 import com.hugbio.utils.ToastManager;
 import com.hugbio.utils.ViewTools;
 
@@ -251,8 +251,8 @@ public class BaseActivity extends Activity implements OnEventListener {
             if (!event.isSuccess()) {
                 final Exception e = event.getFailException();
                 if (e != null) {
-                    if (e instanceof StringIdException) {
-                        onHandleStringIdException((StringIdException) e);
+                    if (e instanceof NetException) {
+                        onHandleStringIdException((NetException) e);
                     } else if (e instanceof ErrorMsgException) {
                         onHandleErrorMsgException((ErrorMsgException) e);
                     }
@@ -304,9 +304,9 @@ public class BaseActivity extends Activity implements OnEventListener {
         }
     }
 
-    protected void onHandleStringIdException(StringIdException e) {
+    protected void onHandleStringIdException(NetException e) {
         final int id = e.getStringId();
-        if (isToast) {
+        if (isToast && id > 0) {
             mToastManager.show(id);
         }
     }

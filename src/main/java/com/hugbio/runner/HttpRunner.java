@@ -7,7 +7,7 @@ import com.hugbio.core.EventManager.OnEventRunner;
 import com.hugbio.download.DownloadParams;
 import com.hugbio.utils.ErrorMsgException;
 import com.hugbio.utils.HttpUtils;
-import com.hugbio.utils.StringIdException;
+import com.hugbio.utils.NetException;
 
 import org.json.JSONObject;
 
@@ -190,11 +190,10 @@ public abstract class HttpRunner implements OnEventRunner {
     protected JSONObject onHandleHttpRet(String ret) throws Exception {
         // 判断IO流是否为空，如果为空，说明没有获得服务器数据，打印网络中断，不抛异常。如果不为空，进入解析.
         if (TextUtils.isEmpty(ret)) {
-            throw new StringIdException(com.hugbio.androidevent.R.string.toast_disconnect);
+            throw new NetException(com.hugbio.androidevent.R.string.toast_disconnect);
+        }else if(ret.startsWith("HttpErr")){
+            throw new NetException(ret);
         } else {
-            if (ret.startsWith("HttpStatusCode")) {
-                throw setMsgException(ret, "1122");
-            }
             int indexOf = ret.indexOf("{");
             if (indexOf > 0) {
                 ret = ret.substring(indexOf);

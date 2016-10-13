@@ -99,7 +99,7 @@ public class HttpUtils {
             }
         } else {
             if (response != null) {
-                strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
+                strResult = "HttpErr:" + response.getStatusLine().getStatusCode();
             }
         }
         return strResult;
@@ -116,7 +116,7 @@ public class HttpUtils {
             }
         } else {
             if (response != null) {
-                strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
+                strResult = "HttpErr:" + response.getStatusLine().getStatusCode();
             }
         }
         return strResult;
@@ -180,11 +180,12 @@ public class HttpUtils {
                 strResult = EntityUtils.toString(response.getEntity());
             } else {
                 if (response != null) {
-                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
+                    strResult = "HttpErr:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            strResult = "HttpErr: Exception is " + e.toString();
         }
         return strResult;
     }
@@ -220,11 +221,12 @@ public class HttpUtils {
                 strResult = EntityUtils.toString(response.getEntity());
             } else {
                 if (response != null) {
-                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
+                    strResult = "HttpErr:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            strResult = "HttpErr: Exception is " + e.toString();
         }
         return strResult;
     }
@@ -280,11 +282,12 @@ public class HttpUtils {
                 strResult = EntityUtils.toString(response.getEntity());
             } else {
                 if (response != null) {
-                    strResult = "HttpStatusCode:" + response.getStatusLine().getStatusCode();
+                    strResult = "HttpErr:" + response.getStatusLine().getStatusCode();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            strResult = "HttpErr: Exception is " + e.toString();
         }
         return strResult;
     }

@@ -128,6 +128,7 @@ public class TableInfo {
 
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
+		checkDatabese = false;
 	}
 
 	public Id getId() {

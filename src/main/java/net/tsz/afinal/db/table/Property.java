@@ -64,8 +64,10 @@ public class Property {
 			}
 		}else{
 			try {
-				field.setAccessible(true);
-				field.set(receiver, value);
+				if(dataType == String.class || value!=null){
+					field.setAccessible(true);
+					field.set(receiver, value);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

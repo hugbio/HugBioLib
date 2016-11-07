@@ -28,16 +28,20 @@ import net.tsz.afinal.db.sqlite.ManyToOneLazyLoader;
 import net.tsz.afinal.db.sqlite.OneToManyLazyLoader;
 import net.tsz.afinal.db.sqlite.SqlBuilder;
 import net.tsz.afinal.db.sqlite.SqlInfo;
+import net.tsz.afinal.db.table.Id;
 import net.tsz.afinal.db.table.KeyValue;
 import net.tsz.afinal.db.table.ManyToOne;
 import net.tsz.afinal.db.table.OneToMany;
+import net.tsz.afinal.db.table.Property;
 import net.tsz.afinal.db.table.TableInfo;
 import net.tsz.afinal.exception.DbException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 import android.util.Log;
 
 public class FinalDb {
@@ -241,188 +245,103 @@ public class FinalDb {
 		return config.getDbName();
 	}
 	
-	
-	
 	//-------------------------------------数据库操作----------------------------------------------
 	
 
+
+	//----------------------------修改数据库表--------------------------------------------------------------
+
+
 	/**
-	 * 保存数据库，速度要比save快
-	 * 
-	 * @param entity
-	 * @return ture： 保存成功 false:保存失败
+	 * 插入数据库表的普通列，注意不支持插入主键列
 	 */
-	public boolean save(Object entity) {
-		checkTableExist(entity.getClass());
+	public void alterAndAddCloumnTable(TableInfo table ,String cloumnName,Class<?> dataType,SQLiteDatabase db){
+		if(table == null) return;
 		try {
-			exeSqlInfo(SqlBuilder.buildInsertSql(entity));
-			return true;
-		} catch (Exception e) {
-			Log.e("Save Err", e.getMessage());
+			String tableName = table.getTableName();
+			String sql = SqlBuilder.getAlterSql("ADD", tableName, cloumnName, dataType);
+			debugSql(sql);
+			db.execSQL(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-		return false;
 	}
 
 	/**
-	 * 保存数据到数据库<br />
-	 * <b>注意：</b><br />
-	 * 保存成功后，entity的主键将被赋值（或更新）为数据库的主键， 只针对自增长的id有效
-	 * 
-	 * @param entity
-	 *            要保存的数据
-	 * @return ture： 保存成功 false:保存失败
-	 */
-	public boolean saveBindId(Object entity) {
-		checkTableExist(entity.getClass());
-		List<KeyValue> entityKvList = SqlBuilder
-				.getSaveKeyValueListByEntity(entity);
-		if (entityKvList != null && entityKvList.size() > 0) {
-			TableInfo tf = TableInfo.get(entity.getClass());
-			ContentValues cv = new ContentValues();
-			insertContentValues(entityKvList, cv);
-			Long id = db.insert(tf.getTableName(), null, cv);
-			if (id == -1)
-				return false;
-			tf.getId().setValue(entity, id);
-			return true;
+	 * 修改表名
+     */
+	public void alterAndRenameTable(String oldTableName,String newTableName,SQLiteDatabase db){
+		try {
+			String sql = "ALTER TABLE ";
+			sql = sql+oldTableName+" RENAME TO " + newTableName+";";
+			debugSql(sql);
+			db.execSQL(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-		return false;
+	}
+
+	/***
+	 * 复制表数据
+	 * @param columns  需要复制的列（必须保证两张表所复制的列的列名和数据类型存在并相等）
+     */
+	public void copyTableData(String oldTableName,String newTableName,ArrayList<String> columns,SQLiteDatabase db){
+		try {
+			String copyTableDataSql = SqlBuilder.getCopyTableDataSql(oldTableName, newTableName, columns);
+			debugSql(copyTableDataSql);
+			db.execSQL(copyTableDataSql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
-	 * 把List<KeyValue>数据存储到ContentValues
-	 * 
-	 * @param list
-	 * @param cv
-	 */
-	private void insertContentValues(List<KeyValue> list, ContentValues cv) {
-		if (list != null && cv != null) {
-			for (KeyValue kv : list) {
-				cv.put(kv.getKey(), kv.getValue().toString());
+	 *  更新表结构，会根据参数TableInfo对应的表名查询数据库中是否存在。存在则更新参数TableInfo对应的表结构
+	 *  一般用于数据库版本更新
+	 *  @param tableInfo  新的表结构
+     */
+	public void updateTableInfo(TableInfo tableInfo,SQLiteDatabase db){
+		if(tableIsExist(tableInfo,db)){
+			boolean isDrop = false;
+			Id id = tableInfo.getId();
+			ArrayList<String> copyColumns = new ArrayList<String>();
+			ArrayList<String> tableIAllColumn = getTableIAllColumn(tableInfo.getTableName(), db);
+			if(tableIAllColumn.contains(id.getColumn()) && tableIsColumnType(tableInfo,id.getColumn(),id.getDataType(),db)){
+				copyColumns.add(id.getColumn());
+				tableIAllColumn.remove(id.getColumn());
+			}else {
+				isDrop = true;
 			}
-		} else {
-			Log.w(TAG,
-					"insertContentValues: List<KeyValue> is empty or ContentValues is empty!");
+			Collection<Property> propertys = tableInfo.propertyMap.values();
+			for (Property property : propertys) {
+				if(tableIAllColumn.contains(property.getColumn()) && tableIsColumnType(tableInfo,property.getColumn(),property.getDataType(),db)){
+					copyColumns.add(property.getColumn());
+					tableIAllColumn.remove(property.getColumn());
+				}else {
+					isDrop = true;
+				}
+			}
+			if(isDrop || tableIAllColumn.size() > 0 ){
+				String oldTableName = tableInfo.getTableName();
+				String newTableName = oldTableName + "_temp";
+				tableInfo.setTableName(newTableName);
+				if(tableIsExist(tableInfo,db)){
+					dropTable(tableInfo);
+				}
+				creatTable(tableInfo);
+				if(copyColumns.size() > 0){
+					copyTableData(oldTableName,newTableName,copyColumns,db);
+				}
+				tableInfo.setTableName(oldTableName);
+				dropTable(tableInfo);
+				alterAndRenameTable(newTableName,oldTableName,db);
+			}
 		}
-
-	}
-
-	/**
-	 * 更新数据 <b>（主键ID必须不能为空）</b>
-	 * 
-	 * @param entity
-	 * @return ture： 更新成功 false:更新失败
-	 */
-	public boolean update(Object entity) {
-		checkTableExist(entity.getClass());
-		try {
-			exeSqlInfo(SqlBuilder.getUpdateSqlAsSqlInfo(entity));
-			return true;
-		} catch (Exception e) {
-			Log.e("update Err", e.getMessage());
-		}
-		return false;
-	}
-
-	/**
-	 * 根据条件更新数据
-	 * 
-	 * @param entity
-	 * @param strWhere 条件为空的时候，将会更新所有的数据
-	 * @return ture： 更新成功 false:更新失败
-	 */
-	public boolean update(Object entity, String strWhere) {
-		checkTableExist(entity.getClass());
-		try {
-			exeSqlInfo(SqlBuilder.getUpdateSqlAsSqlInfo(entity, strWhere));
-			return true;
-		} catch (Exception e) {
-			Log.e("update Err", e.getMessage());
-		}
-		return false;
-	}
-
-	/**
-	 * 删除数据
-	 * 
-	 * @param entity
-	 *            entity的主键不能为空
-	 * @return ture： 删除成功 false:删除失败
-	 */
-	public boolean delete(Object entity) {
-		checkTableExist(entity.getClass());
-		try {
-			exeSqlInfo(SqlBuilder.buildDeleteSql(entity));
-			return true;
-		} catch (Exception e) {
-			Log.e("delete Err", e.getMessage());
-		}
-		return false;
-	}
-
-	/**
-	 * 根据主键删除数据
-	 * 
-	 * @param clazz
-	 *            要删除的实体类
-	 * @param id
-	 *            主键值
-	 * @return ture： 删除成功 false:删除失败
-	 */
-	public boolean deleteById(Class<?> clazz, Object id) {
-		checkTableExist(clazz);
-		try {
-			exeSqlInfo(SqlBuilder.buildDeleteSql(clazz, id));
-			return true;
-		} catch (Exception e) {
-			Log.e("deleteById Err", e.getMessage());
-		}
-		return false;
-	}
-
-	/**
-	 * 根据条件删除数据
-	 * 
-	 * @param clazz
-	 * @param strWhere
-	 *            条件为空的时候 将会删除所有的数据
-	 * @return ture： 删除成功 false:删除失败
-	 */
-	public boolean deleteByWhere(Class<?> clazz, String strWhere) {
-		checkTableExist(clazz);
-		String sql = SqlBuilder.buildDeleteSql(clazz, strWhere);
-		debugSql(sql);
-		try {
-			db.execSQL(sql);
-			return true;
-		} catch (Exception e) {
-			Log.e("deleteByWhere Err", e.getMessage());
-		}
-		return false;
-	}
-
-	/**
-	 * 删除表的所有数据
-	 * 
-	 * @param clazz
-	 * @return ture： 删除成功 false:删除失败
-	 */
-	public boolean deleteAll(Class<?> clazz) {
-		checkTableExist(clazz);
-		String sql = SqlBuilder.buildDeleteSql(clazz, null);
-		debugSql(sql);
-		try {
-			db.execSQL(sql);
-			return true;
-		} catch (Exception e) {
-			Log.e("deleteAll Err", e.getMessage());
-		}
-		return false;
 	}
 
 	/**
 	 * 删除指定的表
-	 * 
+	 *
 	 * @param clazz
 	 */
 	public void dropTable(Class<?> clazz) {
@@ -433,9 +352,23 @@ public class FinalDb {
 		db.execSQL(sql);
 		table.setCheckDatabese(false);
 	}
+
 	/**
 	 * 删除指定的表
-	 * 
+	 */
+	public void dropTable(TableInfo table) {
+		String sql = "DROP TABLE " + table.getTableName();
+		debugSql(sql);
+		try {
+			db.execSQL(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		table.setCheckDatabese(false);
+	}
+	/**
+	 * 删除指定的表
+	 *
 	 * @param clazz
 	 * @param db   指定数据库
 	 */
@@ -490,6 +423,183 @@ public class FinalDb {
 			cursor = null;
 			TableInfo.setAllCheckDatabese(false);
 		}
+	}
+
+
+//----------------------------------------增删改查等---------------------------------------------------------
+
+	/**
+	 * 保存数据库，速度要比save快
+	 *
+	 * @param entity
+	 * @return ture： 保存成功 false:保存失败
+	 */
+	public boolean save(Object entity) {
+		checkTableExist(entity.getClass());
+		try {
+			exeSqlInfo(SqlBuilder.buildInsertSql(entity));
+			return true;
+		} catch (Exception e) {
+			Log.e("Save Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 保存数据到数据库<br />
+	 * <b>注意：</b><br />
+	 * 保存成功后，entity的主键将被赋值（或更新）为数据库的主键， 只针对自增长的id有效
+	 *
+	 * @param entity
+	 *            要保存的数据
+	 * @return ture： 保存成功 false:保存失败
+	 */
+	public boolean saveBindId(Object entity) {
+		checkTableExist(entity.getClass());
+		List<KeyValue> entityKvList = SqlBuilder
+				.getSaveKeyValueListByEntity(entity);
+		if (entityKvList != null && entityKvList.size() > 0) {
+			TableInfo tf = TableInfo.get(entity.getClass());
+			ContentValues cv = new ContentValues();
+			insertContentValues(entityKvList, cv);
+			Long id = db.insert(tf.getTableName(), null, cv);
+			if (id == -1)
+				return false;
+			tf.getId().setValue(entity, id);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 把List<KeyValue>数据存储到ContentValues
+	 *
+	 * @param list
+	 * @param cv
+	 */
+	private void insertContentValues(List<KeyValue> list, ContentValues cv) {
+		if (list != null && cv != null) {
+			for (KeyValue kv : list) {
+				cv.put(kv.getKey(), kv.getValue().toString());
+			}
+		} else {
+			Log.w(TAG,
+					"insertContentValues: List<KeyValue> is empty or ContentValues is empty!");
+		}
+
+	}
+
+	/**
+	 * 更新数据 <b>（主键ID必须不能为空）</b>
+	 *
+	 * @param entity
+	 * @return ture： 更新成功 false:更新失败
+	 */
+	public boolean update(Object entity) {
+		checkTableExist(entity.getClass());
+		try {
+			exeSqlInfo(SqlBuilder.getUpdateSqlAsSqlInfo(entity));
+			return true;
+		} catch (Exception e) {
+			Log.e("update Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 根据条件更新数据
+	 *
+	 * @param entity
+	 * @param strWhere 条件为空的时候，将会更新所有的数据
+	 * @return ture： 更新成功 false:更新失败
+	 */
+	public boolean update(Object entity, String strWhere) {
+		checkTableExist(entity.getClass());
+		try {
+			exeSqlInfo(SqlBuilder.getUpdateSqlAsSqlInfo(entity, strWhere));
+			return true;
+		} catch (Exception e) {
+			Log.e("update Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 删除数据
+	 *
+	 * @param entity
+	 *            entity的主键不能为空
+	 * @return ture： 删除成功 false:删除失败
+	 */
+	public boolean delete(Object entity) {
+		checkTableExist(entity.getClass());
+		try {
+			exeSqlInfo(SqlBuilder.buildDeleteSql(entity));
+			return true;
+		} catch (Exception e) {
+			Log.e("delete Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 根据主键删除数据
+	 *
+	 * @param clazz
+	 *            要删除的实体类
+	 * @param id
+	 *            主键值
+	 * @return ture： 删除成功 false:删除失败
+	 */
+	public boolean deleteById(Class<?> clazz, Object id) {
+		checkTableExist(clazz);
+		try {
+			exeSqlInfo(SqlBuilder.buildDeleteSql(clazz, id));
+			return true;
+		} catch (Exception e) {
+			Log.e("deleteById Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 根据条件删除数据
+	 *
+	 * @param clazz
+	 * @param strWhere
+	 *            条件为空的时候 将会删除所有的数据
+	 * @return ture： 删除成功 false:删除失败
+	 */
+	public boolean deleteByWhere(Class<?> clazz, String strWhere) {
+		checkTableExist(clazz);
+		String sql = SqlBuilder.buildDeleteSql(clazz, strWhere);
+		debugSql(sql);
+		try {
+			db.execSQL(sql);
+			return true;
+		} catch (Exception e) {
+			Log.e("deleteByWhere Err", e.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * 删除表的所有数据
+	 *
+	 * @param clazz
+	 * @return ture： 删除成功 false:删除失败
+	 */
+	public boolean deleteAll(Class<?> clazz) {
+		checkTableExist(clazz);
+		String sql = SqlBuilder.buildDeleteSql(clazz, null);
+		debugSql(sql);
+		try {
+			db.execSQL(sql);
+			return true;
+		} catch (Exception e) {
+			Log.e("deleteAll Err", e.getMessage());
+		}
+		return false;
 	}
 
 	private void exeSqlInfo(SqlInfo sqlInfo) {
@@ -877,13 +987,27 @@ public class FinalDb {
 
 	public void checkTableExist(Class<?> clazz) {
 		if (!tableIsExist(TableInfo.get(clazz))) {
-			String sql = SqlBuilder.getCreatTableSQL(clazz);
-			debugSql(sql);
-			db.execSQL(sql);
+			creatTable(clazz);
 		}
 	}
 
+	public void creatTable(TableInfo tableInfo){
+		String sql = SqlBuilder.getCreatTableSQL(tableInfo);
+		debugSql(sql);
+		db.execSQL(sql);
+	}
+
+	public void creatTable(Class<?> clazz){
+		String sql = SqlBuilder.getCreatTableSQL(clazz);
+		debugSql(sql);
+		db.execSQL(sql);
+	}
+
 	private boolean tableIsExist(TableInfo table) {
+		return tableIsExist(table,db);
+	}
+
+	public boolean tableIsExist(TableInfo table,SQLiteDatabase db) {
 		if (table.isCheckDatabese())
 			return true;
 
@@ -909,6 +1033,96 @@ public class FinalDb {
 			cursor = null;
 		}
 
+		return false;
+	}
+
+	/***
+	 * 查询数据库表是否存在某个列
+	 */
+	public boolean tableIsColumnExist(TableInfo table,String columnName,SQLiteDatabase db) {
+		Cursor cursor = null;
+		try {
+			String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
+					+ table.getTableName() + "' AND sql like '%"+columnName+"%'";
+			debugSql(sql);
+			cursor = db.rawQuery(sql, null);
+			if (cursor != null && cursor.moveToNext()) {
+				int count = cursor.getInt(0);
+				if (count > 0) {
+					table.setCheckDatabese(true);
+					return true;
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (cursor != null)
+				cursor.close();
+			cursor = null;
+		}
+		return false;
+	}
+
+	/***
+	 * 获取某一个表的全部列名
+	 */
+	public ArrayList<String> getTableIAllColumn(String tableName,SQLiteDatabase db) {
+		Cursor cursor = null;
+		ArrayList<String> list = new ArrayList<String >();
+		try {
+			String sql = "PRAGMA table_info (" +
+					tableName +
+					");";
+			debugSql(sql);
+			cursor = db.rawQuery(sql, null);
+			if (cursor != null) {
+				int name = cursor.getColumnIndex("name");
+				while (cursor.moveToNext()){
+					list.add(cursor.getString(name));
+				}
+			}
+			return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (cursor != null)
+				cursor.close();
+			cursor = null;
+		}
+		return list;
+	}
+
+	/***
+	 * 查询数据库表的列的数据类型是否为指定数据类型
+	 */
+	public boolean tableIsColumnType(TableInfo table,String columnName,Class<?> dataType,SQLiteDatabase db) {
+		Cursor cursor = null;
+		try {
+			String dataTypeSql = SqlBuilder.getDataTypeSql(dataType);
+			String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
+					+ table.getTableName() + "' AND sql like '%"+columnName;
+			if(!TextUtils.isEmpty(dataTypeSql)){
+				sql = sql+" "+dataTypeSql;
+			}
+			sql = sql+"%'";
+			debugSql(sql);
+			cursor = db.rawQuery(sql, null);
+			if (cursor != null && cursor.moveToNext()) {
+				int count = cursor.getInt(0);
+				if (count > 0) {
+					table.setCheckDatabese(true);
+					return true;
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (cursor != null)
+				cursor.close();
+			cursor = null;
+		}
 		return false;
 	}
 

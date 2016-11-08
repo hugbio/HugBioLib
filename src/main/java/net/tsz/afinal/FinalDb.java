@@ -1,18 +1,3 @@
-/**
- * Copyright (c) 2012-2013, Michael Yang 杨福海 (www.yangfuhai.com).
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.tsz.afinal;
 
 import java.io.File;
@@ -35,6 +20,8 @@ import net.tsz.afinal.db.table.OneToMany;
 import net.tsz.afinal.db.table.Property;
 import net.tsz.afinal.db.table.TableInfo;
 import net.tsz.afinal.exception.DbException;
+import net.tsz.afinal.utils.FinalDbUtils;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -250,95 +237,6 @@ public class FinalDb {
 
 
 	//----------------------------修改数据库表--------------------------------------------------------------
-
-
-	/**
-	 * 插入数据库表的普通列，注意不支持插入主键列
-	 */
-	public void alterAndAddCloumnTable(TableInfo table ,String cloumnName,Class<?> dataType,SQLiteDatabase db){
-		if(table == null) return;
-		try {
-			String tableName = table.getTableName();
-			String sql = SqlBuilder.getAlterSql("ADD", tableName, cloumnName, dataType);
-			debugSql(sql);
-			db.execSQL(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * 修改表名
-     */
-	public void alterAndRenameTable(String oldTableName,String newTableName,SQLiteDatabase db){
-		try {
-			String sql = "ALTER TABLE ";
-			sql = sql+oldTableName+" RENAME TO " + newTableName+";";
-			debugSql(sql);
-			db.execSQL(sql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/***
-	 * 复制表数据
-	 * @param columns  需要复制的列（必须保证两张表所复制的列的列名和数据类型存在并相等）
-     */
-	public void copyTableData(String oldTableName,String newTableName,ArrayList<String> columns,SQLiteDatabase db){
-		try {
-			String copyTableDataSql = SqlBuilder.getCopyTableDataSql(oldTableName, newTableName, columns);
-			debugSql(copyTableDataSql);
-			db.execSQL(copyTableDataSql);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 *  更新表结构，会根据参数TableInfo对应的表名查询数据库中是否存在。存在则更新参数TableInfo对应的表结构
-	 *  一般用于数据库版本更新
-	 *  @param tableInfo  新的表结构
-     */
-	public void updateTableInfo(TableInfo tableInfo,SQLiteDatabase db){
-		if(tableIsExist(tableInfo,db)){
-			boolean isDrop = false;
-			Id id = tableInfo.getId();
-			ArrayList<String> copyColumns = new ArrayList<String>();
-			ArrayList<String> tableIAllColumn = getTableIAllColumn(tableInfo.getTableName(), db);
-			if(tableIAllColumn.contains(id.getColumn()) && tableIsColumnType(tableInfo,id.getColumn(),id.getDataType(),db)){
-				copyColumns.add(id.getColumn());
-				tableIAllColumn.remove(id.getColumn());
-			}else {
-				isDrop = true;
-			}
-			Collection<Property> propertys = tableInfo.propertyMap.values();
-			for (Property property : propertys) {
-				if(tableIAllColumn.contains(property.getColumn()) && tableIsColumnType(tableInfo,property.getColumn(),property.getDataType(),db)){
-					copyColumns.add(property.getColumn());
-					tableIAllColumn.remove(property.getColumn());
-				}else {
-					isDrop = true;
-				}
-			}
-			if(isDrop || tableIAllColumn.size() > 0 ){
-				String oldTableName = tableInfo.getTableName();
-				String newTableName = oldTableName + "_temp";
-				tableInfo.setTableName(newTableName);
-				if(tableIsExist(tableInfo,db)){
-					dropTable(tableInfo);
-				}
-				creatTable(tableInfo);
-				if(copyColumns.size() > 0){
-					copyTableData(oldTableName,newTableName,copyColumns,db);
-				}
-				tableInfo.setTableName(oldTableName);
-				dropTable(tableInfo);
-				alterAndRenameTable(newTableName,oldTableName,db);
-			}
-		}
-	}
-
 	/**
 	 * 删除指定的表
 	 *
@@ -985,145 +883,21 @@ public class FinalDb {
 		return dbModelList;
 	}
 
-	public void checkTableExist(Class<?> clazz) {
+	private void checkTableExist(Class<?> clazz) {
 		if (!tableIsExist(TableInfo.get(clazz))) {
 			creatTable(clazz);
 		}
 	}
 
-	public void creatTable(TableInfo tableInfo){
-		String sql = SqlBuilder.getCreatTableSQL(tableInfo);
-		debugSql(sql);
-		db.execSQL(sql);
-	}
 
-	public void creatTable(Class<?> clazz){
+	private void creatTable(Class<?> clazz){
 		String sql = SqlBuilder.getCreatTableSQL(clazz);
 		debugSql(sql);
 		db.execSQL(sql);
 	}
 
 	private boolean tableIsExist(TableInfo table) {
-		return tableIsExist(table,db);
-	}
-
-	public boolean tableIsExist(TableInfo table,SQLiteDatabase db) {
-		if (table.isCheckDatabese())
-			return true;
-
-		Cursor cursor = null;
-		try {
-			String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
-					+ table.getTableName() + "' ";
-			debugSql(sql);
-			cursor = db.rawQuery(sql, null);
-			if (cursor != null && cursor.moveToNext()) {
-				int count = cursor.getInt(0);
-				if (count > 0) {
-					table.setCheckDatabese(true);
-					return true;
-				}
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (cursor != null)
-				cursor.close();
-			cursor = null;
-		}
-
-		return false;
-	}
-
-	/***
-	 * 查询数据库表是否存在某个列
-	 */
-	public boolean tableIsColumnExist(TableInfo table,String columnName,SQLiteDatabase db) {
-		Cursor cursor = null;
-		try {
-			String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
-					+ table.getTableName() + "' AND sql like '%"+columnName+"%'";
-			debugSql(sql);
-			cursor = db.rawQuery(sql, null);
-			if (cursor != null && cursor.moveToNext()) {
-				int count = cursor.getInt(0);
-				if (count > 0) {
-					table.setCheckDatabese(true);
-					return true;
-				}
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (cursor != null)
-				cursor.close();
-			cursor = null;
-		}
-		return false;
-	}
-
-	/***
-	 * 获取某一个表的全部列名
-	 */
-	public ArrayList<String> getTableIAllColumn(String tableName,SQLiteDatabase db) {
-		Cursor cursor = null;
-		ArrayList<String> list = new ArrayList<String >();
-		try {
-			String sql = "PRAGMA table_info (" +
-					tableName +
-					");";
-			debugSql(sql);
-			cursor = db.rawQuery(sql, null);
-			if (cursor != null) {
-				int name = cursor.getColumnIndex("name");
-				while (cursor.moveToNext()){
-					list.add(cursor.getString(name));
-				}
-			}
-			return list;
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (cursor != null)
-				cursor.close();
-			cursor = null;
-		}
-		return list;
-	}
-
-	/***
-	 * 查询数据库表的列的数据类型是否为指定数据类型
-	 */
-	public boolean tableIsColumnType(TableInfo table,String columnName,Class<?> dataType,SQLiteDatabase db) {
-		Cursor cursor = null;
-		try {
-			String dataTypeSql = SqlBuilder.getDataTypeSql(dataType);
-			String sql = "SELECT COUNT(*) AS c FROM sqlite_master WHERE type ='table' AND name ='"
-					+ table.getTableName() + "' AND sql like '%"+columnName;
-			if(!TextUtils.isEmpty(dataTypeSql)){
-				sql = sql+" "+dataTypeSql;
-			}
-			sql = sql+"%'";
-			debugSql(sql);
-			cursor = db.rawQuery(sql, null);
-			if (cursor != null && cursor.moveToNext()) {
-				int count = cursor.getInt(0);
-				if (count > 0) {
-					table.setCheckDatabese(true);
-					return true;
-				}
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (cursor != null)
-				cursor.close();
-			cursor = null;
-		}
-		return false;
+		return FinalDbUtils.tableIsExist(table,db);
 	}
 
 	private void debugSql(String sql) {

@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.text.TextUtils;
 
 import com.hugbio.download.DownloadParams;
+import com.hugbio.download.DownloadResult;
 import com.hugbio.download.FileDownloadUtils;
 
 import org.apache.http.HttpResponse;
@@ -45,6 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static android.R.id.empty;
 
 public class HttpUtils {
 
@@ -529,11 +532,11 @@ public class HttpUtils {
      * @return 2000  参数错误
      * 2010  未知的错误
      * 0 下载成功
-     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；4-下载过程中发送未知错误
+     * 3-用户中断下载；
      */
     public static int doDownload(String strUrl, String strSavePath, DownloadParams params) {
         if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
-            return 2000;
+            return DownloadResult.DOWNRESULT_PARAMS_ERROR;
         }
         params.setRestore();
         InputStream is = null;
@@ -562,7 +565,7 @@ public class HttpUtils {
                             File file = new File(strSavePath);
                             file.delete();
                             params.setInterruptStatus(DownloadParams.DOWNSTATUS_CANCEL);
-                            return 3;
+                            return DownloadResult.DOWNRESULT_USER_INTERRUPT;
                         } else if ((lReadLength = is.read(buf)) != -1) {
                             fos.write(buf, 0, lReadLength);
                             lDownloadLength += lReadLength;
@@ -577,7 +580,7 @@ public class HttpUtils {
                     }
                 }
                 params.setComplete();
-                return 0;
+                return DownloadResult.DOWNRESULT_SUCCESS;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -597,7 +600,7 @@ public class HttpUtils {
             }
         }
         params.setInterruptStatus(DownloadParams.DOWNSTATUS_FAILURE);
-        return 2010;
+        return DownloadResult.DOWNRESULT_UNKNOWN_ERROR;
     }
 
     /***
@@ -609,11 +612,11 @@ public class HttpUtils {
      * 2003 下载成功但文件保存（重命名）失败
      * 2010  未知的错误
      * 0 下载成功
-     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；4-下载过程中发送未知错误
+     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；
      */
     public static int doDownloadForResume(String strUrl, String strSavePath, DownloadParams params) {
         if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {
-            return 2000;   //参数错误
+            return DownloadResult.DOWNRESULT_PARAMS_ERROR;   //参数错误
         }
         params.setRestore();
         HttpURLConnection urlConnection = null;
@@ -633,9 +636,9 @@ public class HttpUtils {
             urlConnection.setRequestProperty("RANGE", "bytes=" + range + "-");
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == 204 || responseCode == 205) {
-                return 2001;  // 服务器返回的数据为空
+                return DownloadResult.DOWNRESULT_DATA_EMPTY;  // 服务器返回的数据为空
             } else if (responseCode >= 300) {
-                return 2002;  //连接错误
+                return DownloadResult.DOWNRESULT_CONNECTION_ERROR;  //连接错误
             }
             boolean isAutoResume = FileDownloadUtils.isSupportRange(urlConnection);
             if (!isAutoResume) { //服务器如果不支持断点续传，则重新下载
@@ -644,7 +647,7 @@ public class HttpUtils {
             //断点续传
             int ret = FileDownloadUtils.downLoad(urlConnection, tempFilePath, false, range, params);
             if (ret == 0 && !FileHelper.rename(tempFilePath, strSavePath, true)) {
-                return 2003;
+                return DownloadResult.DOWNRESULT_RENAME_FAILED;
             }
             if(ret == 0){
                 params.setComplete();
@@ -663,7 +666,7 @@ public class HttpUtils {
             }
         }
         params.setInterruptStatus(DownloadParams.DOWNSTATUS_FAILURE);
-        return 2010;
+        return DownloadResult.DOWNRESULT_UNKNOWN_ERROR;
     }
 
 

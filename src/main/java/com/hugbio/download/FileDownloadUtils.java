@@ -63,7 +63,7 @@ public class FileDownloadUtils {
     /***
      * 支持断点续传的下载
      *
-     * @return 0-下载成功；1-本地文件被破坏或者与服务器文件不一致；2-本地文件太小；3-用户中断下载；4-未知错误
+     * @return 0-下载成功；1-本地文件被破坏或者与服务器文件不一致；2-本地文件太小；3-用户中断下载；2010-未知错误
      */
     public static int downLoad(HttpURLConnection connection, String tempSaveFilePath, boolean isDeleteTempForFail, long range, DownloadParams params) {
         File targetFile = null;
@@ -97,12 +97,12 @@ public class FileDownloadUtils {
                         if (!Arrays.equals(checkBuffer, fileCheckBuffer)) {  //本地文件被破坏或者与服务器文件不一致
                             IOUtil.closeQuietly(fis); // 先关闭文件流, 否则文件删除会失败.
                             FileHelper.deleteFileOrDir(targetFile);
-                            return 1;
+                            return DownloadResult.DOWNRESULT_FILE_INCONSISTENT;
                         } else {
                             contentLength -= CHECK_SIZE;
                         }
                     } else {  //本地文件太小，只要调用了getRange方法，几乎不会出现这个问题
-                        return 2;
+                        return DownloadResult.DOWNRESULT_FILE_TOO_SMALL;
                     }
                 } finally {
                     IOUtil.closeQuietly(fis);
@@ -134,7 +134,7 @@ public class FileDownloadUtils {
                     }else {
                         params.setInterruptStatus(DownloadParams.DOWNSTATUS_PAUSE);
                     }
-                    return 3;
+                    return DownloadResult.DOWNRESULT_USER_INTERRUPT;
                 }
                 bos.write(tmp, 0, len);
                 range += len;
@@ -149,13 +149,13 @@ public class FileDownloadUtils {
                 }
             }
             bos.flush();
-            return 0;
+            return DownloadResult.DOWNRESULT_SUCCESS;
         } catch (Exception e) {
             e.printStackTrace();
             if (isDeleteTempForFail) {
                 FileHelper.deleteFile(tempSaveFilePath);
             }
-            return 4;
+            return DownloadResult.DOWNRESULT_UNKNOWN_ERROR;
         } finally {
             IOUtil.closeQuietly(bis);
             IOUtil.closeQuietly(bos);

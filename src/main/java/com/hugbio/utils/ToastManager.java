@@ -1,6 +1,7 @@
 package com.hugbio.utils;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.widget.Toast;
@@ -30,9 +31,13 @@ private static ToastManager sInstance;
 	
 	private Runnable mRunnable = new Runnable() {
 		public void run() {
-			sToastLast = Toast.makeText(mContext, sResIdLast, Toast.LENGTH_LONG);
-			sToastLast.show();
-			sShowTimeLast = System.currentTimeMillis();
+			try {
+				sToastLast = Toast.makeText(mContext, sResIdLast, Toast.LENGTH_LONG);
+				sToastLast.show();
+				sShowTimeLast = System.currentTimeMillis();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
 	

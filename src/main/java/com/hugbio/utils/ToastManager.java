@@ -44,10 +44,14 @@ private static ToastManager sInstance;
 	private Runnable mRunnableString = new Runnable() {
 		@Override
 		public void run() {
-			sToastLast = Toast.makeText(mContext, sStringLast, Toast.LENGTH_LONG);
-			sToastLast.show();
-			sShowTimeLast = System.currentTimeMillis();
-		}
+            try {
+                sToastLast = Toast.makeText(mContext, sStringLast, Toast.LENGTH_LONG);
+                sToastLast.show();
+                sShowTimeLast = System.currentTimeMillis();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 	};
 	
 	public void show(int nResId){

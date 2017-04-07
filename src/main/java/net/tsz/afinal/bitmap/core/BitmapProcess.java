@@ -15,12 +15,12 @@
  */
 package net.tsz.afinal.bitmap.core;
 
+import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+
 import net.tsz.afinal.FinalBitmap;
 import net.tsz.afinal.bitmap.core.BytesBufferPool.BytesBuffer;
 import net.tsz.afinal.bitmap.download.Downloader;
-import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 @SuppressLint("DefaultLocale")
 public class BitmapProcess {

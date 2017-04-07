@@ -15,20 +15,19 @@
  */
 package net.tsz.afinal.bitmap.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-
-import net.tsz.afinal.bitmap.core.BytesBufferPool.BytesBuffer;
-import net.tsz.afinal.bitmap.core.DiskCache.LookupRequest;
-import net.tsz.afinal.utils.Utils;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+
+import net.tsz.afinal.bitmap.core.BytesBufferPool.BytesBuffer;
+import net.tsz.afinal.bitmap.core.DiskCache.LookupRequest;
+import net.tsz.afinal.utils.Utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class BitmapCache {
 
@@ -47,6 +46,7 @@ public class BitmapCache {
 	// private IMemoryCache mMemoryCache;
 	private ImageCacheParams mCacheParams;
 	private MyLruCache mMemoryCache;
+	private LRULinkedHashMap<String,String> keyToWH;
 
 	public BitmapCache(ImageCacheParams cacheParams) {
 		init(cacheParams);
@@ -64,6 +64,7 @@ public class BitmapCache {
 		if (mCacheParams.memoryCacheEnabled) {
 
 			mMemoryCache = new MyLruCache(mCacheParams.memCacheSize);
+			keyToWH = new LRULinkedHashMap<String,String>();
 
 			// //是否立即回收内存
 			// if(mCacheParams.recycleImmediately)
@@ -95,11 +96,26 @@ public class BitmapCache {
 	 * @param bitmap
 	 *            图片数据
 	 */
+	public void addToMemoryCache(String url, BitmapDrawable bitmap,int width,int height) {
+		if (url == null || bitmap == null) {
+			return;
+		}
+		if (mMemoryCache != null) {
+			if (RecyclingBitmapDrawable.class.isInstance(bitmap)) {
+				// The removed entry is a recycling drawable, so notify it
+				// that it has been added into the memory cache
+				((RecyclingBitmapDrawable) bitmap).setIsCached(true);
+			}
+			mMemoryCache.put(url, bitmap);
+			keyToWH.put(url,width+"_"+height);
+		}
+	}
+
 	public void addToMemoryCache(String url, BitmapDrawable bitmap) {
 		if (url == null || bitmap == null) {
 			return;
 		}
-		if(mMemoryCache != null){
+		if (mMemoryCache != null) {
 			if (RecyclingBitmapDrawable.class.isInstance(bitmap)) {
 				// The removed entry is a recycling drawable, so notify it
 				// that it has been added into the memory cache
@@ -184,6 +200,18 @@ public class BitmapCache {
 		}
 		return null;
 	}
+
+	public Bitmap getBitmapFromMemoryCache(String data,int width,int height) {
+		Bitmap bitmap = getBitmapFromMemoryCache(data);
+		if(bitmap != null){
+			String wh = keyToWH.get(data);
+			if(!(width+"_"+height).equals(wh)){
+//                bitmap.recycle();
+				bitmap = null;
+			}
+		}
+		return bitmap;
+	}
 	
 	  /**
      * @param options - BitmapFactory.Options with out* options populated
@@ -215,6 +243,9 @@ public class BitmapCache {
 		if (mMemoryCache != null) {
 			mMemoryCache.evictAll();
 		}
+		if(keyToWH != null){
+			keyToWH.clear();
+		}
 	}
 
 	public void clearCache(String key) {
@@ -229,6 +260,9 @@ public class BitmapCache {
 	public void clearMemoryCache(String key) {
 		if (mMemoryCache != null) {
 			mMemoryCache.remove(key);
+		}
+		if(keyToWH != null){
+			keyToWH.remove(key);
 		}
 	}
 

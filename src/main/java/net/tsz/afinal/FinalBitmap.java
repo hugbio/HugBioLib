@@ -15,12 +15,16 @@
  */
 package net.tsz.afinal;
 
-import java.lang.ref.WeakReference;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
+import android.util.DisplayMetrics;
+import android.view.View;
+import android.widget.ImageView;
 
 import net.tsz.afinal.bitmap.core.BitmapCache;
 import net.tsz.afinal.bitmap.core.BitmapDisplayConfig;
@@ -34,16 +38,12 @@ import net.tsz.afinal.bitmap.download.SimpleDownloader;
 import net.tsz.afinal.core.AsyncTask;
 import net.tsz.afinal.utils.Utils;
 
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.view.View;
-import android.widget.ImageView;
+import java.lang.ref.WeakReference;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public class FinalBitmap {
     private FinalBitmapConfig mConfig;
@@ -70,6 +70,7 @@ public class FinalBitmap {
 
     /**
      * 创建finalbitmap import com.s45.caipotou.R;
+     *
      * @param ctx
      * @return
      */
@@ -87,6 +88,7 @@ public class FinalBitmap {
 
     /**
      * 设置图片正在加载的时候显示的图片
+     *
      * @param bitmap
      */
     public FinalBitmap configLoadingImage(Bitmap bitmap) {
@@ -96,6 +98,7 @@ public class FinalBitmap {
 
     /**
      * 设置图片正在加载的时候显示的图片
+     *
      * @param resId
      */
     public FinalBitmap configLoadingImage(int resId) {
@@ -105,6 +108,7 @@ public class FinalBitmap {
 
     /**
      * 设置图片加载失败时候显示的图片
+     *
      * @param bitmap
      */
     public FinalBitmap configLoadfailImage(Bitmap bitmap) {
@@ -114,6 +118,7 @@ public class FinalBitmap {
 
     /**
      * 设置图片加载失败时候显示的图片
+     *
      * @param resId
      */
     public FinalBitmap configLoadfailImage(int resId) {
@@ -124,6 +129,7 @@ public class FinalBitmap {
 
     /**
      * 配置默认图片的小的高度
+     *
      * @param bitmapHeight
      */
     public FinalBitmap configBitmapMaxHeight(int bitmapHeight) {
@@ -133,6 +139,7 @@ public class FinalBitmap {
 
     /**
      * 配置默认图片的小的宽度
+     *
      * @param bitmapWidth
      */
     public FinalBitmap configBitmapMaxWidth(int bitmapWidth) {
@@ -142,6 +149,7 @@ public class FinalBitmap {
 
     /**
      * 设置下载器，比如通过ftp或者其他协议去网络读取图片的时候可以设置这项
+     *
      * @param downlader
      * @return
      */
@@ -152,6 +160,7 @@ public class FinalBitmap {
 
     /**
      * 设置显示器，比如在显示的过程中显示动画等
+     *
      * @param displayer
      * @return
      */
@@ -163,6 +172,7 @@ public class FinalBitmap {
 
     /**
      * 配置磁盘缓存路径
+     *
      * @param strPath
      * @return
      */
@@ -175,6 +185,7 @@ public class FinalBitmap {
 
     /**
      * 配置内存缓存大小 大于2MB以上有效
+     *
      * @param size 缓存大小
      */
     public FinalBitmap configMemoryCacheSize(int size) {
@@ -184,6 +195,7 @@ public class FinalBitmap {
 
     /**
      * 设置应缓存的在APK总内存的百分比，优先级大于configMemoryCacheSize
+     *
      * @param percent 百分比，值的范围是在 0.05 到 0.8之间
      */
     public FinalBitmap configMemoryCachePercent(float percent) {
@@ -193,6 +205,7 @@ public class FinalBitmap {
 
     /**
      * 设置磁盘缓存大小 5MB 以上有效
+     *
      * @param size
      */
     public FinalBitmap configDiskCacheSize(int size) {
@@ -202,6 +215,7 @@ public class FinalBitmap {
 
     /**
      * 设置加载图片的线程并发数量
+     *
      * @param size
      */
     public FinalBitmap configBitmapLoadThreadSize(int size) {
@@ -212,6 +226,7 @@ public class FinalBitmap {
 
     /**
      * 配置是否立即回收图片资源
+     *
      * @param recycleImmediately
      * @return
      */
@@ -222,6 +237,7 @@ public class FinalBitmap {
 
     /**
      * 初始化finalBitmap
+     *
      * @return
      */
     private FinalBitmap init() {
@@ -269,7 +285,7 @@ public class FinalBitmap {
     ////////////////////////// config method end////////////////////////////////////
 
     public void display(View imageView, String uri) {
-        doDisplay(imageView, uri, null,null);
+        doDisplay(imageView, uri, null, null);
     }
 
 
@@ -282,7 +298,7 @@ public class FinalBitmap {
             configMap.put(imageWidth + "_" + imageHeight, displayConfig);
         }
 
-        doDisplay(imageView, uri, displayConfig,null);
+        doDisplay(imageView, uri, displayConfig, null);
     }
 
     public void display(View imageView, String uri, Bitmap loadingBitmap) {
@@ -293,7 +309,7 @@ public class FinalBitmap {
             configMap.put(String.valueOf(loadingBitmap), displayConfig);
         }
 
-        doDisplay(imageView, uri, displayConfig,null);
+        doDisplay(imageView, uri, displayConfig, null);
     }
 
 
@@ -306,7 +322,7 @@ public class FinalBitmap {
             configMap.put(String.valueOf(loadingBitmap) + "_" + String.valueOf(laodfailBitmap), displayConfig);
         }
 
-        doDisplay(imageView, uri, displayConfig,null);
+        doDisplay(imageView, uri, displayConfig, null);
     }
 
     public void display(View imageView, String uri, int imageWidth, int imageHeight, Bitmap loadingBitmap, Bitmap laodfailBitmap) {
@@ -359,7 +375,7 @@ public class FinalBitmap {
 
 
     public void display(View imageView, String uri, BitmapDisplayConfig config) {
-        doDisplay(imageView, uri, config,null);
+        doDisplay(imageView, uri, config, null);
     }
 
 
@@ -386,7 +402,7 @@ public class FinalBitmap {
             if (!TextUtils.isEmpty(displayConfig.getBitmapProcessName())) {
                 urikey = urikey + displayConfig.getBitmapProcessName();
             }
-            bitmap = mImageCache.getBitmapFromMemoryCache(urikey);
+            bitmap = mImageCache.getBitmapFromMemoryCache(urikey, displayConfig.getBitmapWidth(), displayConfig.getBitmapHeight());
         }
 
         if (bitmap != null) {
@@ -399,7 +415,7 @@ public class FinalBitmap {
                 callback.onBitmapDownloadSuccess();
             }
         } else if (checkImageTask(uri, imageView)) {
-            final BitmapLoadAndDisplayTask task = new BitmapLoadAndDisplayTask(imageView, displayConfig,callback);
+            final BitmapLoadAndDisplayTask task = new BitmapLoadAndDisplayTask(imageView, displayConfig, callback);
             //设置默认图片
             final AsyncDrawable asyncDrawable = new AsyncDrawable(mContext.getResources(), displayConfig.getLoadingBitmap(), task);
 
@@ -414,7 +430,7 @@ public class FinalBitmap {
     }
 
     public byte[] downloadByte(String url) {
-        return mConfig.downloader.download(url,null);
+        return mConfig.downloader.download(url, null);
     }
 
 
@@ -422,7 +438,7 @@ public class FinalBitmap {
      * 根据url获取Bitmap，会首先从缓存（内存缓存和磁盘缓存）中获取。如果缓存没有获取到则从网络下载
      * 注意。不能在ui线程中调用该方法。
      */
-    public Bitmap getOrDownloadBitmap(String uri) {
+    public Bitmap getOrDownloadBitmap(String uri, int w, int h) {
         if (!mInit) {
             init();
         }
@@ -432,22 +448,55 @@ public class FinalBitmap {
         Bitmap bitmap = null;
         String urikey = new String(uri);
         if (mImageCache != null) {
-            bitmap = mImageCache.getBitmapFromMemoryCache(urikey);
+            bitmap = mImageCache.getBitmapFromMemoryCache(urikey, w, h);
         }
         if (bitmap != null) {
             return bitmap;
         } else {
-            bitmap = processBitmap(urikey, null,null);
-            if (bitmap != null) {
-                BitmapDrawable drawable = null;
-                if (net.tsz.afinal.bitmap.core.Utils.hasHoneycomb()) {
-                    drawable = new BitmapDrawable(mContext.getResources(), bitmap);
-                } else {
-                    drawable = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
-                }
-                mImageCache.addToMemoryCache(urikey, drawable);
+            BitmapDisplayConfig displayConfig = configMap.get(w + "_" + h);
+            if (displayConfig == null) {
+                displayConfig = getDisplayConfig();
+                displayConfig.setBitmapHeight(w);
+                displayConfig.setBitmapWidth(h);
+                configMap.put(w + "_" + h, displayConfig);
             }
+            bitmap = processBitmap(urikey, displayConfig, null);
+            addToMemoryCache(urikey, bitmap, w, h);
             return bitmap;
+        }
+    }
+
+    public Bitmap getOrDownloadBitmap(String uri) {
+        return getOrDownloadBitmap(uri, mConfig.defaultDisplayConfig.getBitmapWidth(), mConfig.defaultDisplayConfig.getBitmapHeight());
+    }
+
+    public void addToMemoryCache(String urikey, Bitmap bitmap) {
+        if (bitmap != null) {
+            BitmapDrawable drawable = null;
+            if (net.tsz.afinal.bitmap.core.Utils.hasHoneycomb()) {
+                // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+                drawable = new BitmapDrawable(mContext.getResources(), bitmap);
+            } else {
+                // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+                // which will recycle automagically
+                drawable = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
+            }
+            mImageCache.addToMemoryCache(urikey, drawable);
+        }
+    }
+
+    public void addToMemoryCache(String urikey, Bitmap bitmap, int w, int h) {
+        if (bitmap != null) {
+            BitmapDrawable drawable = null;
+            if (net.tsz.afinal.bitmap.core.Utils.hasHoneycomb()) {
+                // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+                drawable = new BitmapDrawable(mContext.getResources(), bitmap);
+            } else {
+                // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+                // which will recycle automagically
+                drawable = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
+            }
+            mImageCache.addToMemoryCache(urikey, drawable, w, h);
         }
     }
 
@@ -501,6 +550,7 @@ public class FinalBitmap {
 
     /**
      * 执行过此方法后,FinalBitmap的缓存已经失效,建议通过FinalBitmap.create()获取新的实例
+     *
      * @author fantouch
      */
     private void closeCacheInternalInBackgroud() {
@@ -513,6 +563,7 @@ public class FinalBitmap {
 
     /**
      * 网络加载bitmap
+     *
      * @return
      */
     private Bitmap processBitmap(String uri, BitmapDisplayConfig config, BitmapLoadAndDisplayTask task) {
@@ -524,6 +575,7 @@ public class FinalBitmap {
 
     /**
      * 从缓存（内存缓存和磁盘缓存）中直接获取bitmap，注意这里有io操作，最好不要放在ui线程执行
+     *
      * @param key
      * @return
      */
@@ -537,6 +589,7 @@ public class FinalBitmap {
 
     /**
      * 从内存缓存中获取bitmap
+     *
      * @param key
      * @return
      */
@@ -546,6 +599,7 @@ public class FinalBitmap {
 
     /**
      * 从磁盘缓存中获取bitmap，，注意这里有io操作，最好不要放在ui线程执行
+     *
      * @param key
      * @return
      */
@@ -587,6 +641,7 @@ public class FinalBitmap {
 
     /**
      * 获取当前缓冲大小,单位 MB
+     *
      * @return
      */
     public float getCurrentDiskCacheSize() {
@@ -609,6 +664,7 @@ public class FinalBitmap {
 
     /**
      * 根据key清除指定的内存缓存
+     *
      * @param key
      */
     public void clearCache(String key) {
@@ -625,6 +681,7 @@ public class FinalBitmap {
 
     /**
      * 根据key清除指定的内存缓存
+     *
      * @param key
      */
     public void clearMemoryCache(String key) {
@@ -642,6 +699,7 @@ public class FinalBitmap {
 
     /**
      * 根据key清除指定的内存缓存
+     *
      * @param key
      */
     public void clearDiskCache(String key) {
@@ -652,6 +710,7 @@ public class FinalBitmap {
     /**
      * 关闭缓存
      * 执行过此方法后,FinalBitmap的缓存已经失效,建议通过FinalBitmap.create()获取新的实例
+     *
      * @author fantouch
      */
     public void closeCache() {
@@ -660,6 +719,7 @@ public class FinalBitmap {
 
     /**
      * 退出正在加载的线程，程序退出的时候调用词方法
+     *
      * @param exitTasksEarly
      */
     public void exitTasksEarly(boolean exitTasksEarly) {
@@ -670,6 +730,7 @@ public class FinalBitmap {
 
     /**
      * 暂停正在加载的线程，监听listview或者gridview正在滑动的时候调用此方法
+     *
      * @param pauseWork true停止暂停线程，false继续线程
      */
     public void pauseWork(boolean pauseWork) {
@@ -702,6 +763,7 @@ public class FinalBitmap {
 
     /**
      * 检测 imageView中是否已经有线程在运行
+     *
      * @param data
      * @param imageView
      * @return true 没有 false 有线程在运行了
@@ -778,6 +840,7 @@ public class FinalBitmap {
 
     /**
      * bitmap下载显示的线程
+     *
      * @author michael yang
      */
     public class BitmapLoadAndDisplayTask extends AsyncTask<Object, Integer, Bitmap> {
@@ -812,7 +875,7 @@ public class FinalBitmap {
             final View imageView = getAttachedImageView();
             if (imageView != null && wCallback != null) {
                 BitmapDownloadCallback callback = wCallback.get();
-                if(callback != null){
+                if (callback != null) {
                     callback.onBitmapDownloadLoading(values[0], values[1]);
                 }
             }
@@ -838,14 +901,14 @@ public class FinalBitmap {
             }
 
             if (bitmap == null && !isCancelled() && getAttachedImageView() != null && !mExitTasksEarly) {
-                bitmap = processBitmap(dataString, displayConfig,this);
+                bitmap = processBitmap(dataString, displayConfig, this);
             }
 
             if (bitmap != null) {
                 String bitmapKey = new String(dataString);
                 if (displayConfig.getBitmapProcessName() != null && wCallback != null) {
                     BitmapDownloadCallback callback = wCallback.get();
-                    if(callback != null){
+                    if (callback != null) {
                         Bitmap temp = callback.onDownloadSuccessForProcess(bitmap);
                         if (temp != null) {
                             if (bitmap != temp && !bitmap.isRecycled()) {
@@ -856,16 +919,7 @@ public class FinalBitmap {
                         bitmapKey = bitmapKey + displayConfig.getBitmapProcessName();
                     }
                 }
-                BitmapDrawable drawable = null;
-                if (net.tsz.afinal.bitmap.core.Utils.hasHoneycomb()) {
-                    // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-                    drawable = new BitmapDrawable(mContext.getResources(), bitmap);
-                } else {
-                    // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-                    // which will recycle automagically
-                    drawable = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
-                }
-                mImageCache.addToMemoryCache(bitmapKey, drawable);
+                addToMemoryCache(bitmapKey, bitmap, displayConfig.getBitmapWidth(), displayConfig.getBitmapHeight());
             }
             return bitmap;
         }
@@ -881,7 +935,7 @@ public class FinalBitmap {
             if (bitmap != null && imageView != null) {
                 if (wCallback != null) {
                     BitmapDownloadCallback callback = wCallback.get();
-                    if(callback != null){
+                    if (callback != null) {
                         callback.onBitmapDownloadSuccess();
                     }
                 }
@@ -889,7 +943,7 @@ public class FinalBitmap {
             } else if (bitmap == null && imageView != null) {
                 if (wCallback != null) {
                     BitmapDownloadCallback callback = wCallback.get();
-                    if(callback != null){
+                    if (callback != null) {
                         callback.onBitmapDownloadFail();
                     }
                 }
@@ -907,6 +961,7 @@ public class FinalBitmap {
 
         /**
          * 获取线程匹配的imageView,防止出现闪动的现象
+         *
          * @return
          */
         private View getAttachedImageView() {
@@ -922,11 +977,11 @@ public class FinalBitmap {
     }
 
     /**
+     * @author michael Young (www.YangFuhai.com)
+     * @version 1.0
      * @title 配置信息
      * @description FinalBitmap的配置信息
      * @company 探索者网络工作室(www.tsz.net)
-     * @author michael Young (www.YangFuhai.com)
-     * @version 1.0
      * @created 2012-10-28
      */
     private class FinalBitmapConfig {

@@ -53,11 +53,36 @@ public class LoadBitmap {
         return finalBitmap.getOrDownloadBitmap(url);
     }
 
+    public static Bitmap getOrDownloadBitmap(String url, int w, int h) {
+        if (finalBitmap == null) {
+            return null;
+        }
+        return finalBitmap.getOrDownloadBitmap(url, w, h);
+    }
+
     public static byte[] downloadByte(String url) {
         if (finalBitmap == null) {
             return null;
         }
         return finalBitmap.downloadByte(url);
+    }
+
+    public static void addToMemoryCache(String urikey, Bitmap bitmap, int w, int h) {
+        if (finalBitmap == null) {
+            return;
+        }
+        if (bitmap != null && !bitmap.isRecycled()) {
+            finalBitmap.addToMemoryCache(urikey, bitmap, w, h);
+        }
+    }
+
+    public static void addToMemoryCache(String urikey, Bitmap bitmap) {
+        if (finalBitmap == null) {
+            return;
+        }
+        if (bitmap != null && !bitmap.isRecycled()) {
+            finalBitmap.addToMemoryCache(urikey, bitmap);
+        }
     }
 
     public static void setBitmapEx(final View view, String url, int defaultResId) {

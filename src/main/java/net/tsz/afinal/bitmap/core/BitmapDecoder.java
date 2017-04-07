@@ -15,15 +15,14 @@
  */
 package net.tsz.afinal.bitmap.core;
 
-import java.io.FileDescriptor;
-
-import net.tsz.afinal.FinalBitmap;
 import android.annotation.TargetApi;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.util.Log;
+
+import java.io.FileDescriptor;
 
 
 public class BitmapDecoder {

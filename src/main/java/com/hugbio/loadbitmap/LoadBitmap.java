@@ -85,14 +85,14 @@ public class LoadBitmap {
         }
     }
 
-    public Bitmap getBitmapFromMemoryCache(String key) {
+    public static Bitmap getBitmapFromMemoryCache(String key) {
         if (finalBitmap == null) {
             return null;
         }
         return finalBitmap.getBitmapFromMemoryCache(key);
     }
 
-    public Bitmap getBitmapFromMemoryCache(String key,int w,int h) {
+    public static Bitmap getBitmapFromMemoryCache(String key,int w,int h) {
         if (finalBitmap == null) {
             return null;
         }

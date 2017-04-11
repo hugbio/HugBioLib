@@ -597,6 +597,10 @@ public class FinalBitmap {
         return mImageCache.getBitmapFromMemoryCache(key);
     }
 
+    public Bitmap getBitmapFromMemoryCache(String key,int w,int h) {
+        return mImageCache.getBitmapFromMemoryCache(key,w,h);
+    }
+
     /**
      * 从磁盘缓存中获取bitmap，，注意这里有io操作，最好不要放在ui线程执行
      *

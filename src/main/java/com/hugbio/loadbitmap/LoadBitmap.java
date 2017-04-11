@@ -85,6 +85,20 @@ public class LoadBitmap {
         }
     }
 
+    public Bitmap getBitmapFromMemoryCache(String key) {
+        if (finalBitmap == null) {
+            return null;
+        }
+        return finalBitmap.getBitmapFromMemoryCache(key);
+    }
+
+    public Bitmap getBitmapFromMemoryCache(String key,int w,int h) {
+        if (finalBitmap == null) {
+            return null;
+        }
+        return finalBitmap.getBitmapFromMemoryCache(key,w,h);
+    }
+
     public static void setBitmapEx(final View view, String url, int defaultResId) {
         if (finalBitmap == null) {
             return;

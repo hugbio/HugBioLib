@@ -205,7 +205,7 @@ public class BitmapCache {
 		Bitmap bitmap = getBitmapFromMemoryCache(data);
 		if(bitmap != null){
 			String wh = keyToWH.get(data);
-			if(!(width+"_"+height).equals(wh)){
+			if(wh != null && !(width+"_"+height).equals(wh)){
 //                bitmap.recycle();
 				bitmap = null;
 			}

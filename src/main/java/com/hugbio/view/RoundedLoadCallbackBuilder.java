@@ -28,10 +28,6 @@ import com.makeramen.roundedimageview.RoundedDrawable;
 
 import net.tsz.afinal.bitmap.core.BitmapDownloadCallback;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
 public final class RoundedLoadCallbackBuilder {
 
   private final DisplayMetrics mDisplayMetrics;

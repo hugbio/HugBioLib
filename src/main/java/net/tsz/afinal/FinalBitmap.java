@@ -788,7 +788,7 @@ public class FinalBitmap {
     }
 
 
-    private static class AsyncDrawable extends BitmapDrawable {
+    public static class AsyncDrawable extends BitmapDrawable {
         private final WeakReference<BitmapLoadAndDisplayTask> bitmapWorkerTaskReference;
 
         public AsyncDrawable(Resources res, Bitmap bitmap, BitmapLoadAndDisplayTask bitmapWorkerTask) {

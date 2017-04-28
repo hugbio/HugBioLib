@@ -841,9 +841,18 @@ public class FinalDb {
 	 * 获取count
      */
 	public  <T> int count(Class<T> clazz) {
+		return count(clazz,null);
+	}
+
+	public  <T> int count(Class<T> clazz, String strWhere) {
 		checkTableExist(clazz);
-		TableInfo tableInfo = TableInfo.get(clazz);
-		DbModel dbModelBySQL = findDbModelBySQL("select count(*) from " + tableInfo.getTableName() + " ;");
+		TableInfo tableInfo = TableInfo.get(clazz); //
+		String sql = "select count(*) from " + tableInfo.getTableName();
+		if(!TextUtils.isEmpty(strWhere)){
+			sql = sql + " WHERE " + strWhere;
+		}
+		sql = sql + " ;";
+		DbModel dbModelBySQL = findDbModelBySQL(sql);
 		return dbModelBySQL.getInt("count(*)");
 	}
 

@@ -15,7 +15,18 @@ public class XBitmapDisplayer extends SimpleDisplayer {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void loadCompletedisplay(View imageView, Bitmap bitmap, BitmapDisplayConfig config) {
-		if(imageView instanceof ImageView){
+		if(imageView instanceof com.makeramen.roundedimageview.RoundedImageView){
+			final ImageView iv = (ImageView) imageView;
+//			BitmapDrawable bitmapDrawable = new BitmapDrawable(imageView.getResources(), bitmap);
+//			iv.setImageDrawable(bitmapDrawable);
+			final TransitionDrawable td =
+					new TransitionDrawable(new Drawable[] {
+							new ColorDrawable(android.R.color.transparent),
+							new BitmapDrawable(imageView.getResources(), bitmap)
+					});
+			iv.setImageDrawable(td);
+			td.startTransition(300);
+		}else if(imageView instanceof ImageView){
         	final ImageView iv = (ImageView)imageView;
         	if(bitmap.hasAlpha()){
         		final TransitionDrawable td =

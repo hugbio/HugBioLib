@@ -1,6 +1,7 @@
 package com.hugbio.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
@@ -13,7 +14,9 @@ import java.lang.ref.WeakReference;
  */
 public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImageView {
 
-    private WeakReference<FinalBitmap.BitmapLoadAndDisplayTask> bitmapWorkerTaskReference  = null;
+//    private WeakReference<FinalBitmap.BitmapLoadAndDisplayTask> bitmapWorkerTaskReference  = null;
+
+    private WeakReference<FinalBitmap.AsyncDrawable> asyncDrawableReference = null;
 
     public RoundedImageView(Context context) {
         super(context);
@@ -29,26 +32,26 @@ public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImag
 
 
     @Override
+    public void setImageBitmap(Bitmap bm) {
+        super.setImageBitmap(bm);
+    }
+
+    @Override
     public void setImageDrawable(Drawable drawable) {
         if(drawable instanceof FinalBitmap.AsyncDrawable){
-            FinalBitmap.BitmapLoadAndDisplayTask bitmapWorkerTask = ((FinalBitmap.AsyncDrawable) drawable).getBitmapWorkerTask();
-            if(bitmapWorkerTask != null){
-                bitmapWorkerTaskReference = new WeakReference<FinalBitmap.BitmapLoadAndDisplayTask>(bitmapWorkerTask);
-            }else {
-                bitmapWorkerTaskReference = null;
-            }
+            asyncDrawableReference = new WeakReference<FinalBitmap.AsyncDrawable>((FinalBitmap.AsyncDrawable)drawable);
         }else {
-            bitmapWorkerTaskReference = null;
+            asyncDrawableReference = null;
         }
         super.setImageDrawable(drawable);
     }
 
     @Override
     public Drawable getDrawable() {
-        if(bitmapWorkerTaskReference != null){
-            FinalBitmap.BitmapLoadAndDisplayTask bitmapLoadAndDisplayTask = bitmapWorkerTaskReference.get();
-            if(bitmapLoadAndDisplayTask != null){
-                return new FinalBitmap.AsyncDrawable(getResources(),null,bitmapLoadAndDisplayTask);
+        if(asyncDrawableReference != null){
+            FinalBitmap.AsyncDrawable asyncDrawable = asyncDrawableReference.get();
+            if(asyncDrawable != null){
+                return asyncDrawable;
             }
         }
         return super.getDrawable();

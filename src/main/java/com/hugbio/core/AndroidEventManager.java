@@ -115,8 +115,9 @@ public class AndroidEventManager extends EventManager {
 	@Override
 	public Event runEvent(int eventCode, Object... params) {
 		Event event = new Event(eventCode, params);
-		processEvent(event);
-		mHandler.sendMessage(mHandler.obtainMessage(WHAT_EVENT_END, event));
+		if(processEvent(event)){
+			mHandler.sendMessage(mHandler.obtainMessage(WHAT_EVENT_END, event));
+		}
 		return event;
 	}
 
@@ -135,9 +136,7 @@ public class AndroidEventManager extends EventManager {
 		if (isEventRunning(event)) {
 			return false;
 		}
-
 		mMapRunningEvent.put(event, event);
-
 		try {
 			List<OnEventRunner> runners = mMapCodeToEventRunner.get(event
 					.getEventCode());

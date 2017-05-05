@@ -406,7 +406,6 @@ public class FinalBitmap {
         }
 
         if (bitmap != null) {
-            checkImageTask(uri,imageView);
             if (imageView instanceof ImageView) {
                 ((ImageView) imageView).setImageBitmap(bitmap);
             } else {

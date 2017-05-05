@@ -34,6 +34,41 @@ public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImag
     @Override
     public void setImageBitmap(Bitmap bm) {
         super.setImageBitmap(bm);
+        asyncDrawableReference = null;
+    }
+
+    @Override
+    public void setImageResource(int resId) {
+        super.setImageResource(resId);
+        asyncDrawableReference = null;
+    }
+
+    @Override
+    public void setBackground(Drawable background) {
+        if(background instanceof FinalBitmap.AsyncDrawable){
+            asyncDrawableReference = new WeakReference<FinalBitmap.AsyncDrawable>((FinalBitmap.AsyncDrawable)background);
+        }else {
+            asyncDrawableReference = null;
+        }
+        super.setBackground(background);
+    }
+
+    @Override
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        asyncDrawableReference = null;
+    }
+
+    @Override
+    public void setBackgroundResource(int resId) {
+        super.setBackgroundResource(resId);
+        asyncDrawableReference = null;
+    }
+
+    @Override
+    public void setBackgroundDrawable(Drawable background) {
+        super.setBackgroundDrawable(background);
+        asyncDrawableReference = null;
     }
 
     @Override

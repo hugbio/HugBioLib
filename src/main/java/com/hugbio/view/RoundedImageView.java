@@ -16,7 +16,7 @@ public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImag
 
 //    private WeakReference<FinalBitmap.BitmapLoadAndDisplayTask> bitmapWorkerTaskReference  = null;
 
-    private WeakReference<FinalBitmap.AsyncDrawable> asyncDrawableReference = null;
+    private Drawable asyncDrawable = null;
 
     public RoundedImageView(Context context) {
         super(context);
@@ -34,21 +34,21 @@ public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImag
     @Override
     public void setImageBitmap(Bitmap bm) {
         super.setImageBitmap(bm);
-        asyncDrawableReference = null;
+        asyncDrawable = null;
     }
 
     @Override
     public void setImageResource(int resId) {
         super.setImageResource(resId);
-        asyncDrawableReference = null;
+        asyncDrawable = null;
     }
 
     @Override
     public void setBackground(Drawable background) {
-        if(background instanceof FinalBitmap.AsyncDrawable){
-            asyncDrawableReference = new WeakReference<FinalBitmap.AsyncDrawable>((FinalBitmap.AsyncDrawable)background);
-        }else {
-            asyncDrawableReference = null;
+        if (background instanceof FinalBitmap.AsyncDrawable) {
+            asyncDrawable = background;
+        } else {
+            asyncDrawable = null;
         }
         super.setBackground(background);
     }
@@ -56,38 +56,39 @@ public class RoundedImageView extends com.makeramen.roundedimageview.RoundedImag
     @Override
     public void setBackgroundColor(int color) {
         super.setBackgroundColor(color);
-        asyncDrawableReference = null;
+        asyncDrawable = null;
     }
 
     @Override
     public void setBackgroundResource(int resId) {
         super.setBackgroundResource(resId);
-        asyncDrawableReference = null;
+        asyncDrawable = null;
     }
 
     @Override
     public void setBackgroundDrawable(Drawable background) {
         super.setBackgroundDrawable(background);
-        asyncDrawableReference = null;
+        if (background instanceof FinalBitmap.AsyncDrawable) {
+            asyncDrawable = background;
+        } else {
+            asyncDrawable = null;
+        }
     }
 
     @Override
     public void setImageDrawable(Drawable drawable) {
-        if(drawable instanceof FinalBitmap.AsyncDrawable){
-            asyncDrawableReference = new WeakReference<FinalBitmap.AsyncDrawable>((FinalBitmap.AsyncDrawable)drawable);
-        }else {
-            asyncDrawableReference = null;
+        if (drawable instanceof FinalBitmap.AsyncDrawable) {
+            asyncDrawable = drawable;
+        } else {
+            asyncDrawable = null;
         }
         super.setImageDrawable(drawable);
     }
 
     @Override
     public Drawable getDrawable() {
-        if(asyncDrawableReference != null){
-            FinalBitmap.AsyncDrawable asyncDrawable = asyncDrawableReference.get();
-            if(asyncDrawable != null){
-                return asyncDrawable;
-            }
+        if (asyncDrawable != null) {
+            return asyncDrawable;
         }
         return super.getDrawable();
     }

@@ -23,6 +23,10 @@ public class ErrorMsgException extends Exception {
 
 	public String getResultCode() {
 		return retCode;
+	}
 
+	@Override
+	public String getMessage() {
+		return super.getMessage()+"("+"ErrorMsg : "+ErrorMsg+")";
 	}
 }

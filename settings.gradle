@@ -1,1 +1,1 @@
-
+//rootProject.buildFileName = '/publish/build.gradle'  //发布版本到jcenter时使用

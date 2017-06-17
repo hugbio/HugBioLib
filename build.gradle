@@ -9,6 +9,7 @@ android {
         targetSdkVersion 19
     }
 
+
     buildTypes {
         release {
             minifyEnabled false

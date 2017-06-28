@@ -63,7 +63,7 @@ public class FileDownloadUtils {
     /***
      * 支持断点续传的下载
      *
-     * @return 0-下载成功；1-本地文件被破坏或者与服务器文件不一致；2-本地文件太小；3-用户中断下载；2010-未知错误
+     * @return 0-下载成功；1-本地文件被破坏或者与服务器文件不一致；3-用户中断下载；2010-未知错误
      */
     public static int downLoad(HttpURLConnection connection, String tempSaveFilePath, boolean isDeleteTempForFail, long range, DownloadParams params) {
         File targetFile = null;
@@ -102,7 +102,7 @@ public class FileDownloadUtils {
                             contentLength -= CHECK_SIZE;
                         }
                     } else {  //本地文件太小，只要调用了getRange方法，几乎不会出现这个问题
-                        return DownloadResult.DOWNRESULT_FILE_TOO_SMALL;
+                        return DownloadResult.DOWNRESULT_FILE_INCONSISTENT;
                     }
                 } finally {
                     IOUtil.closeQuietly(fis);

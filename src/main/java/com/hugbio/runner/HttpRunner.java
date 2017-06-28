@@ -20,10 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class HttpRunner implements OnEventRunner {
 
-    private List<Integer> resultForOK = Arrays.asList(0, 1000, 1001, 1002);
+    protected List<Integer> resultInSuccess = Arrays.asList(0, 1000, 1001, 1002);
     private static String SERVER = null;
     private static String SERVERBYIP = null;
-
     public static boolean isDomainToIP = false;
 
     public static void setDomainToIP(String server) {
@@ -80,30 +79,6 @@ public abstract class HttpRunner implements OnEventRunner {
             return strUrl.substring(nIndexStart, nEnd);
         }
         return "";
-    }
-
-    protected boolean checkRequestSuccess(JSONObject jsonObject) {
-        try {
-            int result = jsonObject.getInt("result");
-            if (resultForOK.contains(result)) {
-                return true;
-            } else if (result == 3003) {
-                HttpUtils.sessid = "";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    protected boolean checkRequestSuccess(String strJson) {
-        try {
-            JSONObject jsonObject = new JSONObject(strJson);
-            return "0".equals(jsonObject.getString("result"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 
     protected JSONObject doGet(String url) throws Exception {
@@ -191,7 +166,7 @@ public abstract class HttpRunner implements OnEventRunner {
         // 判断IO流是否为空，如果为空，说明没有获得服务器数据，打印网络中断，不抛异常。如果不为空，进入解析.
         if (TextUtils.isEmpty(ret)) {
             throw new NetException(com.hugbio.androidevent.R.string.toast_disconnect);
-        }else if(ret.startsWith("HttpErr")){
+        } else if (ret.startsWith("HttpErr")) {
             throw new NetException(ret);
         } else {
             int indexOf = ret.indexOf("{");
@@ -220,14 +195,29 @@ public abstract class HttpRunner implements OnEventRunner {
         }
     }
 
-    // 设置返回的额外信息，根据需要，自己重写
+    // 设置返回的额外信息，根据需要重写
     protected ErrorMsgException setMsgException(String msg, String resultCode) {
 
         return new ErrorMsgException(msg, resultCode);
     }
 
-    // 给url增加的公共参数，根据需要，自己重写
+    // 给url增加的公共参数，根据需要重写
     protected String addUrlCommonParams(String url) {
         return url;
+    }
+
+    //检测请求是否成功，必须重写
+    protected boolean checkRequestSuccess(JSONObject jsonObject) {
+        try {
+            int result = jsonObject.getInt("result");
+            if (resultInSuccess.contains(result)) {
+                return true;
+            } else if (result == 3003) {
+                HttpUtils.sessid = "";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

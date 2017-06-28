@@ -55,19 +55,15 @@ public class HttpUtils {
 
     private static int TIMEOUT_CONNECTION = 8000;
     private static int TIMEOUT_SO = 10000;
+    //head
     public static final String USER_IDENTITY_KEY = "User-Identity";
-
     public static final String MOBILE_AGENT_KEY = "Mobile-Agent";
-
     public static final String SESSION_KEY = "Session";
-
     public static final String COOKIE_KEY = "Cookie";
     public static final String PHPSESSID_KEY = "PHPSESSID";
     public static String sessid = "";
-
     public static final String COOKIE_SET_KEY = "Set-Cookie";
     private static String mMobile_Agent_Aulae = "Android" + "/%s" + "," + "%s";
-
     public static String MOBILE_AGENT_VALUE = String.format(mMobile_Agent_Aulae, android.os.Build.MODEL, "2.0");
     public static String USER_IDENTITY_VALUE = String.format(mMobile_Agent_Aulae, android.os.Build.MODEL, "2.0");
 
@@ -612,7 +608,7 @@ public class HttpUtils {
      * 2003 下载成功但文件保存（重命名）失败
      * 2010  未知的错误
      * 0 下载成功
-     * 1-本地文件被破坏或者与服务器文件不一致；2-本地已下载的文件太小；3-用户中断下载；
+     * 1-本地文件被破坏或者与服务器文件不一致；3-用户中断下载；
      */
     public static int doDownloadForResume(String strUrl, String strSavePath, DownloadParams params) {
         if (TextUtils.isEmpty(strSavePath) || TextUtils.isEmpty(strUrl)) {

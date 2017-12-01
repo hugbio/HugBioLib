@@ -861,6 +861,11 @@ public class FinalBitmap {
             }
         }
 
+
+        public boolean isHaveDownLoadCallback() {
+            return wCallback != null && wCallback.get() != null;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();

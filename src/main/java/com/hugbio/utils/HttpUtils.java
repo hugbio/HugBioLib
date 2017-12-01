@@ -14,6 +14,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -41,13 +45,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static android.R.id.empty;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 
 public class HttpUtils {
 
@@ -169,6 +175,15 @@ public class HttpUtils {
             entity.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
             httpPost.setEntity(entity);
             HttpClient httpClient = new DefaultHttpClient();
+            if (strUrl.toLowerCase().contains("https")) {
+                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                trustStore.load(null, null);
+                SSLSocketFactory ssf = new SSLSocketFactoryEx(trustStore);
+                ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);  //允许所有主机的验证
+                ClientConnectionManager ccm = httpClient.getConnectionManager();
+                SchemeRegistry sr = ccm.getSchemeRegistry();
+                sr.register(new Scheme("https", ssf, 443));
+            }
             HttpParams params = httpClient.getParams();
             HttpConnectionParams.setConnectionTimeout(params, TIMEOUT_CONNECTION);
             HttpConnectionParams.setSoTimeout(params, TIMEOUT_SO);
@@ -210,6 +225,15 @@ public class HttpUtils {
             entity.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
             httpPost.setEntity(entity);
             HttpClient httpClient = new DefaultHttpClient();
+            if (strUrl.toLowerCase().contains("https")) {
+                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                trustStore.load(null, null);
+                SSLSocketFactory ssf = new SSLSocketFactoryEx(trustStore);
+                ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);  //允许所有主机的验证
+                ClientConnectionManager ccm = httpClient.getConnectionManager();
+                SchemeRegistry sr = ccm.getSchemeRegistry();
+                sr.register(new Scheme("https", ssf, 443));
+            }
             HttpParams params = httpClient.getParams();
             HttpConnectionParams.setConnectionTimeout(params, TIMEOUT_CONNECTION);
             HttpConnectionParams.setSoTimeout(params, TIMEOUT_SO);
@@ -271,6 +295,15 @@ public class HttpUtils {
                 httpPost.setEntity(entity);
             }
             HttpClient httpClient = new DefaultHttpClient();
+            if (strUrl.toLowerCase().contains("https")) {
+                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                trustStore.load(null, null);
+                SSLSocketFactory ssf = new SSLSocketFactoryEx(trustStore);
+                ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);  //允许所有主机的验证
+                ClientConnectionManager ccm = httpClient.getConnectionManager();
+                SchemeRegistry sr = ccm.getSchemeRegistry();
+                sr.register(new Scheme("https", ssf, 443));
+            }
             HttpParams params = httpClient.getParams();
             HttpConnectionParams.setConnectionTimeout(params, TIMEOUT_CONNECTION);
             HttpConnectionParams.setSoTimeout(params, TIMEOUT_SO);
@@ -297,8 +330,14 @@ public class HttpUtils {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(strUrl);
-            conn = (HttpURLConnection) url.openConnection();
-
+            if (url.getProtocol().toLowerCase().contains("https")) {
+                conn = (HttpsURLConnection) url.openConnection();
+                SSLContext ssl = SSLContextEx.getSSlContext();
+                ((HttpsURLConnection) conn).setSSLSocketFactory(ssl.getSocketFactory());
+                ((HttpsURLConnection) conn).setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER); //允许所有主机的验证
+            } else {
+                conn = (HttpURLConnection) url.openConnection();
+            }
             File file = new File(strFilePath);
             String strFilename = file.getName();
 
@@ -540,7 +579,15 @@ public class HttpUtils {
         HttpURLConnection urlConnection = null;
         try {
             final URL url = new URL(strUrl);
-            urlConnection = (HttpURLConnection) url.openConnection();
+            if (url.getProtocol().toLowerCase().contains("https")) {
+                urlConnection = (HttpsURLConnection) url.openConnection();
+                SSLContext ssl = SSLContextEx.getSSlContext();
+                ((HttpsURLConnection) urlConnection).setSSLSocketFactory(ssl.getSocketFactory());
+                ((HttpsURLConnection) urlConnection).setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER); //允许所有主机的验证
+            } else {
+                urlConnection = (HttpURLConnection) url.openConnection();
+            }
+            urlConnection.setRequestProperty("Accept-Encoding", "identity");
             urlConnection.setConnectTimeout(params.getTimeOut());
             urlConnection.setReadTimeout(params.getTimeOut());
             is = urlConnection.getInputStream();
@@ -566,7 +613,7 @@ public class HttpUtils {
                             fos.write(buf, 0, lReadLength);
                             lDownloadLength += lReadLength;
                             ProgressRunnable progressCallback = params.getProgressCallback();
-                            if(progressCallback != null){
+                            if(progressCallback != null && lTotalLength > 0){
                                 progressCallback.mPercentage = (int) (lDownloadLength * 100 / lTotalLength);
                                 params.getHandler().post(progressCallback);
                             }
@@ -625,7 +672,15 @@ public class HttpUtils {
                 FileDownloadUtils.deleteDownloadFile(strSavePath);
             }
             final URL url = new URL(strUrl);
-            urlConnection = (HttpURLConnection) url.openConnection();
+            if (url.getProtocol().toLowerCase().contains("https")) {
+                urlConnection = (HttpsURLConnection) url.openConnection();
+                SSLContext ssl = SSLContextEx.getSSlContext();
+                ((HttpsURLConnection) urlConnection).setSSLSocketFactory(ssl.getSocketFactory());
+                ((HttpsURLConnection) urlConnection).setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER); //允许所有主机的验证
+            } else {
+                urlConnection = (HttpURLConnection) url.openConnection();
+            }
+            urlConnection.setRequestProperty("Accept-Encoding", "identity");
             urlConnection.setConnectTimeout(params.getTimeOut());
             urlConnection.setReadTimeout(params.getTimeOut());
             urlConnection.setRequestMethod("GET");
@@ -686,8 +741,16 @@ public class HttpUtils {
             }
             httpGet.addHeader(USER_IDENTITY_KEY, USER_IDENTITY_VALUE);
             httpGet.addHeader(MOBILE_AGENT_KEY, MOBILE_AGENT_VALUE);
-
             HttpClient httpClient = new DefaultHttpClient();
+            if (strUrl.toLowerCase().contains("https")) {
+                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                trustStore.load(null, null);
+                SSLSocketFactory ssf = new SSLSocketFactoryEx(trustStore);
+                ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);  //允许所有主机的验证
+                ClientConnectionManager ccm = httpClient.getConnectionManager();
+                SchemeRegistry sr = ccm.getSchemeRegistry();
+                sr.register(new Scheme("https", ssf, 443));
+            }
             HttpParams params = httpClient.getParams();
             HttpConnectionParams.setConnectionTimeout(params, TIMEOUT_CONNECTION);
             HttpConnectionParams.setSoTimeout(params, TIMEOUT_SO);

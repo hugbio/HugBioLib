@@ -140,7 +140,7 @@ public class FileDownloadUtils {
                 range += len;
                 HttpUtils.ProgressRunnable progressCallback = params.getProgressCallback();
                 Handler handler = params.getHandler();
-                if (progressCallback != null && handler != null) {
+                if (progressCallback != null && handler != null && total > 0) {
                     int per = (int) (range * 100 / total);
                     if (progressCallback.mPercentage != per) {
                         progressCallback.mPercentage = per;

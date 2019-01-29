@@ -72,6 +72,7 @@ public class HttpUtils {
     private static String mMobile_Agent_Aulae = "Android" + "/%s" + "," + "%s";
     public static String MOBILE_AGENT_VALUE = String.format(mMobile_Agent_Aulae, android.os.Build.MODEL, "2.0");
     public static String USER_IDENTITY_VALUE = String.format(mMobile_Agent_Aulae, android.os.Build.MODEL, "2.0");
+    private static HashMap<String,String> heads = new HashMap<>();
 
     public static void setConnectionTimeOut(int time) {
         TIMEOUT_CONNECTION = time;
@@ -79,6 +80,18 @@ public class HttpUtils {
 
     public static void setSoTimeOut(int time) {
         TIMEOUT_SO = time;
+    }
+
+    /**
+     * 添加公共的请求头
+     * @param key
+     * @param value
+     */
+    public static void addHttpHead(String key,String value){
+        if(TextUtils.isEmpty(key) || TextUtils.isEmpty(value)){
+            return;
+        }
+        heads.put(key,value);
     }
 
     public static InputStream doGetInputStream(String strUrl) {
@@ -161,6 +174,11 @@ public class HttpUtils {
             httpPost.addHeader(USER_IDENTITY_KEY, USER_IDENTITY_VALUE);
             httpPost.addHeader(MOBILE_AGENT_KEY, MOBILE_AGENT_VALUE);
             httpPost.addHeader(HTTP.CONTENT_TYPE, "application/json");
+            //增加自定义公共请求头
+            for (String key : heads.keySet()) {
+                final String value = heads.get(key);
+                httpPost.addHeader(key, value);
+            }
 
 //            List<NameValuePair> formparams = new ArrayList<NameValuePair>();
             JSONObject jo = new JSONObject();
@@ -218,6 +236,11 @@ public class HttpUtils {
             httpPost.addHeader(USER_IDENTITY_KEY, USER_IDENTITY_VALUE);
             httpPost.addHeader(MOBILE_AGENT_KEY, MOBILE_AGENT_VALUE);
             httpPost.addHeader(HTTP.CONTENT_TYPE, "application/json");
+            //增加自定义公共请求头
+            for (String key : heads.keySet()) {
+                final String value = heads.get(key);
+                httpPost.addHeader(key, value);
+            }
 
 //            List<NameValuePair> formparams = new ArrayList<NameValuePair>();
             StringEntity entity = new StringEntity(jo.toString());
@@ -268,7 +291,11 @@ public class HttpUtils {
             }
             httpPost.addHeader(USER_IDENTITY_KEY, USER_IDENTITY_VALUE);
             httpPost.addHeader(MOBILE_AGENT_KEY, MOBILE_AGENT_VALUE);
-
+            //增加自定义公共请求头
+            for (String key : heads.keySet()) {
+                final String value = heads.get(key);
+                httpPost.addHeader(key, value);
+            }
             if (mapKeyToFilePath != null) {
                 MultipartEntityEx entity = new MultipartEntityEx(HttpMultipartMode.BROWSER_COMPATIBLE, pr, handler, cancel);
 
@@ -741,6 +768,11 @@ public class HttpUtils {
             }
             httpGet.addHeader(USER_IDENTITY_KEY, USER_IDENTITY_VALUE);
             httpGet.addHeader(MOBILE_AGENT_KEY, MOBILE_AGENT_VALUE);
+            //增加自定义公共请求头
+            for (String key : heads.keySet()) {
+                final String value = heads.get(key);
+                httpGet.addHeader(key, value);
+            }
             HttpClient httpClient = new DefaultHttpClient();
             if (strUrl.toLowerCase().contains("https")) {
                 KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
